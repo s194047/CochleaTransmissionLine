@@ -17,7 +17,7 @@ function cochlea_transmission_line!(
 
     dy .= v
     dv .= 1 / m * (
-        (-d(y) .* v - s(y) .* y) #+
+        (-d(y) .* v - s .* y) #+
         #inv_M * (
         #    β.(x) .* (-d.(x, y) .* v - s.(x, y) .* y) +
         #    b

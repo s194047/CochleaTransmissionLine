@@ -40,11 +40,11 @@ y_ref = 1e-6                        # Reference velocity
 m = 0.375                           # Membrane mass per unit area
 s = 2π * m^2 * f_R .^ 2             # Membrane stiffness
 
-d(y) = (1 - γ) * (δ_sat - δ_neg) / (1 .+ exp.((Λ.(y) .- α) / μ_α)) +
-       γ * (δ_sat - δ_neg) / (1 .+ exp.((Λ.(y) .- α) / μ_α))            # Membrane damping
+d(y) = (1 - γ) * (δ_sat - δ_neg) ./ (1 .+ exp.((Λ.(y) .- α) / μ_α)) +
+       γ * (δ_sat - δ_neg) ./ (1 .+ exp.((Λ.(y) .- α) / μ_α))            # Membrane damping
 
-c(y) = (1 - γ) * σ_zweig / (1 .+ exp.((Λ.(y) .- α) / μ_α)) +
-       γ * σ_zweig / (1 .+ exp.((Λ.(y) .- α) / μ_α))                    # Feedback stiffness term
+c(y) = (1 - γ) * σ_zweig ./ (1 .+ exp.((Λ.(y) .- α) / μ_α)) +
+       γ * σ_zweig ./ (1 .+ exp.((Λ.(y) .- α) / μ_α))                    # Feedback stiffness term
 
 ϵ = 0.01                            # Roughness scaling coefficient
 N = randn(rng, n)                   # Normal distribution samples with μ = 0, σ = 1
@@ -82,7 +82,7 @@ param = CochleaTransmissionLineParam(
     #apex=apex,
 )
 
-u0 = repeat([0.0, 0.0], outer=n)
+u0 = repeat([1.0, 0.0], outer=n)
 tspan = (0.0, 100.0)
 
 problem = ODEProblem(
@@ -97,7 +97,7 @@ algorithm = Tsit5()
 solution = solve(problem, algorithm)
 
 
-fs = 1e3
+fs = 1e3 # Sampling rate (Hz)
 
 t, u = get_solution_samples(solution, fs)
 y, v = @views u[:, 1:2:end], u[:, 2:2:end]

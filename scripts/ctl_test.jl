@@ -77,7 +77,7 @@ algorithm = Tsit5()
 
 solution = solve(problem, algorithm)
 
-fs = 1e3 # Sampling rate (Hz)
+fs = 1e5 # Sampling rate (Hz)
 
 t, u = get_solution_samples(solution, fs)
 y, v = @views u[:, 1:2:end], u[:, 2:2:end]

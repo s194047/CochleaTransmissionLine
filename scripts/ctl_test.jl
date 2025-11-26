@@ -20,7 +20,7 @@ A = 20_832                          # x-f map coefficient
 λ = 60                              # x-f map length constant
 κ = 145.5                           # x-f map correction
 
-f_R(x) = A * 10 .^ (-λ * x) .- κ    # place-frequency (x-f) map
+f_R(x) = A * 10 ^ (-λ * x) - κ    # place-frequency (x-f) map
 τ(x) = 1.742 ./ f_R(x)              # Delay of feedback stiffness
 
 v_ref = 1e-6                        # Reference velocity
@@ -37,7 +37,7 @@ v_ref = 1e-6                        # Reference velocity
 σ_zweig(x) = 0.1416 * 10^(-0.17 * x / x_apex)    # Feedback stiffness amplitude
 
 m = 0.375                           # Membrane mass per unit area
-s(x) = 2π * m^2 * f_R(x)^2             # Membrane stiffness
+s(x) = m * 4π^2 * f_R(x)^2             # Membrane stiffness
 
 # Membrane damping
 d(x, v) =
@@ -63,7 +63,7 @@ param = CochleaTransmissionLineParam(
     s=s,
 )
 
-u0 = repeat([1.0, 0.0], outer=n)
+u0 = repeat([1e-9, 0.0], outer=n)
 tspan = (0.0, 10.0)
 
 problem = ODEProblem(

@@ -7,7 +7,7 @@ using Random
 
 rng = Xoshiro(0)
 
-n = 10                             # Number of discrete segments
+n = 100                             # Number of discrete segments
 
 x_apex = 35e-3                      # Length at apex
 
@@ -84,7 +84,13 @@ y, v = @views u[:, 1:2:end], u[:, 2:2:end]
 
 #plot(t, y, leg=false)
 
-heatmap(1:n, t, v)
+begin
+    osc_idx_range = 90:100
+    t_min = 5.000
+    t_max = 5.100
+    t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
+    heatmap(osc_idx_range, t[t_idx_range], v[t_idx_range, osc_idx_range])
+end
 
 # begin
 #     x = 0.000

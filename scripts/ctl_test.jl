@@ -1,13 +1,13 @@
 using CochleaTransmissionLine
 
 using LinearAlgebra
-using OrdinaryDiffEq
+using DelayDiffEq
 using Plots
 using Random
 
 rng = Xoshiro(0)
 
-n = 100                             # Number of discrete segments
+n = 10                             # Number of discrete segments
 
 x_apex = 35e-3                      # Length at apex
 
@@ -61,19 +61,31 @@ param = CochleaTransmissionLineParam(
     m=m,
     d=d,
     s=s,
+    c=c,
+    τ=τ,
 )
 
 u0 = repeat([1e-9, 0.0], outer=n)
-tspan = (0.0, 10.0)
+function u_history(
+    ::CochleaTransmissionLineParam,
+    ::Float64,
+    ;
+    idxs=nothing,
+)
+    if idxs == nothing; u0
+    else u0[idxs] end
+end
+tspan = (0.0, 1.0)
 
-problem = ODEProblem(
+problem = DDEProblem(
     cochlea_transmission_line!,
     u0,
+    u_history,
     tspan,
     param,
 )
 
-algorithm = Tsit5()
+algorithm = MethodOfSteps(Tsit5())
 
 solution = solve(problem, algorithm)
 
@@ -85,9 +97,9 @@ y, v = @views u[:, 1:2:end], u[:, 2:2:end]
 #plot(t, y, leg=false)
 
 begin
-    osc_idx_range = 90:100
-    t_min = 5.000
-    t_max = 5.100
+    osc_idx_range = 10:10
+    t_min = 0.500
+    t_max = 0.600
     t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
     heatmap(osc_idx_range, t[t_idx_range], v[t_idx_range, osc_idx_range])
 end

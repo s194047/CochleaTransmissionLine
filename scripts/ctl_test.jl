@@ -5,57 +5,57 @@ using DelayDiffEq
 using Plots
 using Random
 
-rng = Xoshiro(0)
+const rng = Xoshiro(0)
 
-n = 1000                             # Number of discrete segments
+const n = 1000                             # Number of discrete segments
 
-x_apex = 35e-3                      # Length at apex
+const x_apex = 35e-3                      # Length at apex
 
-x = LinRange(0.0, x_apex, n)        # Longitudinal coordinate
+const x = LinRange(0.0, x_apex, n)        # Longitudinal coordinate
 
 # Intrinsic paramters
 # ===================
 
-A = 20_832                          # x-f map coefficient
-λ = 60                              # x-f map length constant
-κ = 145.5                           # x-f map correction
+const A = 20_832                          # x-f map coefficient
+const λ = 60                              # x-f map length constant
+const κ = 145.5                           # x-f map correction
 
-f_R(x) = A * 10 ^ (-λ * x) - κ    # place-frequency (x-f) map
-τ(x) = 1.742 ./ f_R(x)              # Delay of feedback stiffness
+const f_R(x) = A * 10 ^ (-λ * x) - κ    # place-frequency (x-f) map
+const τ(x) = 1.742 ./ f_R(x)              # Delay of feedback stiffness
 
-v_ref = 1e-6                        # Reference velocity
-Λ(v) = 20 * log10(abs(v) / v_ref)   # Velocity level in dB
+const v_ref = 1e-6                        # Reference velocity
+const Λ(v) = 20 * log10(abs(v) / v_ref)   # Velocity level in dB
 
-γ = 0.12                            # Amplitude of plateau
-α = 40                              # Middle turning point velocity
-μ_α = 6                             # Slope at middle turning point
-β = -10                             # Lower turning point velocity
-μ_β = 5                             # Slope at lower turning point
+const γ = 0.12                            # Amplitude of plateau
+const α = 40                              # Middle turning point velocity
+const μ_α = 6                             # Slope at middle turning point
+const β = -10                             # Lower turning point velocity
+const μ_β = 5                             # Slope at lower turning point
 
-δ_sat(x) = 0.2 * 10^(0.52 * x / x_apex)          # Damping saturation
-δ_neg(x) = -0.12 * 10^(-0.17 * x / x_apex)       # Negative damping
-σ_zweig(x) = 0.1416 * 10^(-0.17 * x / x_apex)    # Feedback stiffness amplitude
+const δ_sat(x) = 0.2 * 10^(0.52 * x / x_apex)          # Damping saturation
+const δ_neg(x) = -0.12 * 10^(-0.17 * x / x_apex)       # Negative damping
+const σ_zweig(x) = 0.1416 * 10^(-0.17 * x / x_apex)    # Feedback stiffness amplitude
 
-m = 0.375                           # Membrane mass per unit area
-s(x) = m * 4π^2 * f_R(x)^2             # Membrane stiffness
+const m = 0.375                           # Membrane mass per unit area
+const s(x) = m * 4π^2 * f_R(x)^2             # Membrane stiffness
 
 # Membrane damping
-d(x, v) =
+const d(x, v) =
     ((1 - γ) * (δ_sat(x) - δ_neg(x)) * (1 - 1 / (1 + exp((Λ(v) - α) / μ_α))) +
      γ * (δ_sat(x) - δ_neg(x)) * (1 - 1 / (1 + exp((Λ(v) - β) / μ_β))) +
      δ_neg(x)) * sqrt(m * s(x))
 
 # Feedback stiffness term
-c(x, v) =
+const c(x, v) =
     (1 - γ) * σ_zweig(x) * (1 / (1 + exp.((Λ.(v) .- α) / μ_α))) +
     γ * σ_zweig(x) * (1 / (1 + exp((Λ.(v) - β) / μ_β)))
 
-ϵ = 0.01                            # Roughness scaling coefficient
-N = randn(rng, n)                   # Normal distribution samples with μ = 0, σ = 1
+const ϵ = 0.01                            # Roughness scaling coefficient
+const N = randn(rng, n)                   # Normal distribution samples with μ = 0, σ = 1
 
-s_rough = s.(x) .* (1 .+ ϵ * N)         # Membrane stiffness with perturbation
+const s_rough = s.(x) .* (1 .+ ϵ * N)         # Membrane stiffness with perturbation
 
-param = CochleaTransmissionLineParam(
+const param = CochleaTransmissionLineParam(
     n=n,
     x=x,
     m=m,
@@ -65,7 +65,7 @@ param = CochleaTransmissionLineParam(
     τ=τ,
 )
 
-u0 = repeat([1e-9, 0.0], outer=n)
+const u0 = repeat([1e-9, 0.0], outer=n)
 function u_history(
     ::CochleaTransmissionLineParam,
     ::Float64,
@@ -75,7 +75,7 @@ function u_history(
     if idxs == nothing; u0
     else u0[idxs] end
 end
-tspan = (0.0, 0.010)
+const tspan = (0.0, 0.010)
 
 problem = DDEProblem(
     cochlea_transmission_line!,

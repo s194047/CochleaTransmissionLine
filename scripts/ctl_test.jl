@@ -75,7 +75,7 @@ function u_history(
     if idxs == nothing; u0
     else u0[idxs] end
 end
-const tspan = (0.0, 0.010)
+const tspan = (0.0, 0.100)
 
 problem = DDEProblem(
     cochlea_transmission_line!,

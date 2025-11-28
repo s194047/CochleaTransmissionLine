@@ -7,7 +7,7 @@ using Random
 
 rng = Xoshiro(0)
 
-n = 10                             # Number of discrete segments
+n = 1000                             # Number of discrete segments
 
 x_apex = 35e-3                      # Length at apex
 
@@ -75,7 +75,7 @@ function u_history(
     if idxs == nothing; u0
     else u0[idxs] end
 end
-tspan = (0.0, 1.0)
+tspan = (0.0, 0.010)
 
 problem = DDEProblem(
     cochlea_transmission_line!,
@@ -87,7 +87,7 @@ problem = DDEProblem(
 
 algorithm = MethodOfSteps(Tsit5())
 
-solution = solve(problem, algorithm)
+simulation_time = @elapsed solution = solve(problem, algorithm)
 
 fs = 1e5 # Sampling rate (Hz)
 
@@ -98,8 +98,8 @@ y, v = @views u[:, 1:2:end], u[:, 2:2:end]
 
 begin
     osc_idx_range = 10:10
-    t_min = 0.500
-    t_max = 0.600
+    t_min = 0.050
+    t_max = 0.100
     t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
     heatmap(osc_idx_range, t[t_idx_range], v[t_idx_range, osc_idx_range])
 end

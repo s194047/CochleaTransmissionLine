@@ -17,7 +17,7 @@ function cochlea_transmission_line!(
     history_broadcast_wrapper(param, t, idxs) = u_history(param, t, idxs=idxs)
     y_history = history_broadcast_wrapper.(Ref(param), t .- τ.(x), 1:2:2n-1)
 
-    g = d.(x, v) .* v - s.(x) .* (y + c.(x, v) .* y_history)
+    g = d.(x, v) .* v + s.(x) .* (y + c.(x, v) .* y_history)
 
     dy .= v
     dv .= 1 / m * (

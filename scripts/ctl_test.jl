@@ -4,57 +4,75 @@ using LinearAlgebra
 using DelayDiffEq
 using Plots
 using Random
-
-const rng = Xoshiro(0)
+const rng = Xoshiro(0)                              # Use a seeded rng
+                                                    # for reproducibility
 
 # TODO: We should implement n + 1 sections with 0-indexing
-const n = 1000                             # Number of discrete segments
+const n = 1000                                      # Number of discrete segments
 
-const x_apex = 35e-3                      # Length at apex
+const x_apex = 35e-3                                # Length at apex
 
-const x = LinRange(0.0, x_apex, n)        # Longitudinal coordinate
+const x = LinRange(0.0, x_apex, n)                  # Longitudinal coordinate
 
 # Intrinsic paramters
 # ===================
 
-const A = 20_832                          # x-f map coefficient
-const λ = 60                              # x-f map length constant
-const κ = 145.5                           # x-f map correction
+const A = 20_832                                    # x-f map coefficient
+const λ = 60                                        # x-f map length constant
+const κ = 145.5                                     # x-f map correction
 
-const f_R(x) = A * 10 ^ (-λ * x) - κ    # place-frequency (x-f) map
-const τ(x) = 1.742 ./ f_R(x)              # Delay of feedback stiffness
+const f_R(x) = A .* 10 .^ (-λ * x) .- κ                # place-frequency (x-f) map
+const τ = 1.742 ./ f_R.(x)                          # Delay of feedback stiffness
 
-const v_ref = 1e-6                        # Reference velocity
-const Λ(v) = 20 * log10(abs(v) / v_ref)   # Velocity level in dB
+const v_ref = 1e-6                                  # Reference velocity
+const Λ(v) = 20 * log10(abs(v) / v_ref)             # Velocity level in dB
 
-const γ = 0.12                            # Amplitude of plateau
-const α = 40                              # Middle turning point velocity
-const μ_α = 6                             # Slope at middle turning point
-const β = -10                             # Lower turning point velocity
-const μ_β = 5                             # Slope at lower turning point
+const sigm_γ = 0.12                                 # Amplitude of plateau
+const sigm_α = 40                                   # Middle turning point velocity
+const sigm_μ_α = 6                                  # Slope at middle turning point
+const sigm_β = -10                                  # Lower turning point velocity
+const sigm_μ_β = 5                                  # Slope at lower turning point
 
-const δ_sat(x) = 0.2 * 10^(0.52 * x / x_apex)          # Damping saturation
-const δ_neg(x) = -0.12 * 10^(-0.17 * x / x_apex)       # Negative damping
-const σ_zweig(x) = 0.1416 * 10^(-0.17 * x / x_apex)    # Feedback stiffness amplitude
+const δ_sat(x) = 0.2 * 10^(0.52 * x / x_apex)       # Damping saturation
+const δ_neg(x) = -0.12 * 10^(-0.17 * x / x_apex)    # Negative damping
+const σ_zweig(x) = 0.1416 * 10^(-0.17 * x / x_apex) # Feedback stiffness amplitude
 
-const m = 0.375                           # Membrane mass per unit area
-const s(x) = m * 4π^2 * f_R(x)^2             # Membrane stiffness
+const m = 0.375                                     # Membrane mass per unit area
+const s(x) = m * 4π^2 * f_R(x) .^ 2                 # Membrane stiffness
 
-# Membrane damping
-const d(x, v) =
-    ((1 - γ) * (δ_sat(x) - δ_neg(x)) * (1 - 1 / (1 + exp((Λ(v) - α) / μ_α))) +
-     γ * (δ_sat(x) - δ_neg(x)) * (1 - 1 / (1 + exp((Λ(v) - β) / μ_β))) +
-     δ_neg(x)) * sqrt(m * s(x))
+const d(x, v) =                                     # Membrane damping
+(
+(1 - sigm_γ) * (δ_sat(x) - δ_neg(x)) *
+        (
+1 - 1 /
+(1 + exp((Λ(v) - sigm_α) / sigm_μ_α))
+) +
+        sigm_γ * (δ_sat(x) - δ_neg(x)) *
+        (
+1 - 1 /
+(1 + exp((Λ(v) - sigm_β) / sigm_μ_β))
+) +
+     δ_neg(x)
+) *
+sqrt(m * s(x))
 
-# Feedback stiffness term
-const c(x, v) =
-    (1 - γ) * σ_zweig(x) * (1 / (1 + exp.((Λ.(v) .- α) / μ_α))) +
-    γ * σ_zweig(x) * (1 / (1 + exp((Λ.(v) - β) / μ_β)))
+const c(x, v) =                                     # Feedback stiffness term
+    (1 - sigm_γ) * σ_zweig(x) *
+    (
+1 /
+(1 + exp.((Λ.(v) .- sigm_α) / sigm_μ_α))
+) +
+    sigm_γ * σ_zweig(x) *
+    (
+1 /
+(1 + exp((Λ.(v) - sigm_β) / sigm_μ_β))
+)
 
-const ϵ = 0.01                            # Roughness scaling coefficient
-const N = randn(rng, n)                   # Normal distribution samples with μ = 0, σ = 1
+const ϵ = 0.01                                      # Roughness scaling coefficient
+const N_s_rough = randn(rng, n)                     # Normal distribution samples with
+                                                    # μ = 0, σ = 1
 
-const s_rough = s.(x) .* (1 .+ ϵ * N)         # Membrane stiffness with perturbation
+const s_rough = s.(x) .* (1 .+ ϵ * N_s_rough)       # Membrane stiffness with roughness
 
 const param = CochleaTransmissionLineParam(
     n=n,
@@ -66,6 +84,9 @@ const param = CochleaTransmissionLineParam(
     τ=τ,
 )
 
+# Construct and solve problem
+# ===========================
+
 const u0 = repeat([1e-9, 0.0], outer=n)
 function u_history(
     ::CochleaTransmissionLineParam,
@@ -73,8 +94,11 @@ function u_history(
     ;
     idxs=nothing,
 )
-    if idxs == nothing; u0
-    else u0[idxs] end
+    if idxs == nothing
+u0
+    else
+u0[idxs]
+end
 end
 const tspan = (0.0, 0.100)
 

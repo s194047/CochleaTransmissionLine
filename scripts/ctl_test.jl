@@ -4,6 +4,8 @@ using LinearAlgebra
 using DelayDiffEq
 using Plots
 using Random
+using Statistics
+
 const rng = Xoshiro(0)                              # Use a seeded rng
                                                     # for reproducibility
 
@@ -138,9 +140,10 @@ simulation_time = @elapsed solution = solve(problem, algorithm)
 fs = 1e5 # Sampling rate (Hz)
 
 t, u = get_solution_samples(solution, fs)
+_, du = get_solution_samples(solution, fs, Val{1})
 y, v = @views u[:, 1:2:end], u[:, 2:2:end]
 
-#plot(t, y, leg=false)
+ρ_inst = instantaneous_rotation(u, du)
 
 begin
     osc_idx_range = 10:10
@@ -148,6 +151,15 @@ begin
     t_max = 0.100
     t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
     heatmap(osc_idx_range, t[t_idx_range], v[t_idx_range, osc_idx_range])
+end
+
+begin
+    osc_idx_range = 1:1000
+    t_min = 0.01000
+    t_max = 0.01100
+    t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
+    ρ_mean = vec(mean(ρ_inst[t_idx_range, osc_idx_range], dims=1))
+    scatter(osc_idx_range, ρ_mean, leg=false)
 end
 
 # begin

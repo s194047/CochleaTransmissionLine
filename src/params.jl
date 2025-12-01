@@ -10,4 +10,8 @@
     c::Function             # Feedback stiffness term: (x, v) -> d
     τ::Vector{Float64}      # Delay of feedback stiffness
 
+    # Fluid Coupling Parameters
+    β::Float64              # Fluid mass to CP mass ratio
+    inv_M::Matrix{Float64}  # Inverse coupling matrix
+    stimulus::Function      # Stapedial stimulus: t -> stimulus
 end

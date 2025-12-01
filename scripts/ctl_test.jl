@@ -74,6 +74,24 @@ const N_s_rough = randn(rng, n)                     # Normal distribution sample
 
 const s_rough = s.(x) .* (1 .+ ϵ * N_s_rough)       # Membrane stiffness with roughness
 
+# Coupling Parameters
+# ===================
+
+const β = 0.1               # Fluid mass to CP mass ratio
+const K = -2.0 - β
+const A, B = K - 1.0, 1.0
+const Y, Z = 1.0, -(1 + β) # + helicotrema_mass_ratio)
+const M =                   # Coupling matrix
+Tridiagonal(
+    [B; ones(n - 2)],
+    [A; K * ones(n - 2); Z],
+    [ones(n - 2); Y],
+)
+
+const inv_M = inv(M)        # Inverse coupling matrix
+const stimulus(t) = 0.0     # Stapedial stimulus
+
+# Wrap all parameters into an object for the solver
 const param = CochleaTransmissionLineParam(
     n=n,
     x=x,
@@ -82,6 +100,9 @@ const param = CochleaTransmissionLineParam(
     s=s,
     c=c,
     τ=τ,
+    β=β,
+    inv_M=inv_M,
+    stimulus=stimulus,
 )
 
 # Construct and solve problem

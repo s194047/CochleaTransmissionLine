@@ -7,6 +7,7 @@ using Random
 
 const rng = Xoshiro(0)
 
+# TODO: We should implement n + 1 sections with 0-indexing
 const n = 1000                             # Number of discrete segments
 
 const x_apex = 35e-3                      # Length at apex

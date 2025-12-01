@@ -43,32 +43,32 @@ const m = 0.375                                     # Membrane mass per unit are
 const s(x) = m * 4π^2 * f_R(x) .^ 2                 # Membrane stiffness
 
 const d(x, v) =                                     # Membrane damping
-(
-(1 - sigm_γ) * (δ_sat(x) - δ_neg(x)) *
+    (
+        (1 - sigm_γ) * (δ_sat(x) - δ_neg(x)) *
         (
-1 - 1 /
-(1 + exp((Λ(v) - sigm_α) / sigm_μ_α))
-) +
+            1 - 1 /
+            (1 + exp((Λ(v) - sigm_α) / sigm_μ_α))
+        ) +
         sigm_γ * (δ_sat(x) - δ_neg(x)) *
         (
-1 - 1 /
-(1 + exp((Λ(v) - sigm_β) / sigm_μ_β))
-) +
-     δ_neg(x)
-) *
-sqrt(m * s(x))
+            1 - 1 /
+            (1 + exp((Λ(v) - sigm_β) / sigm_μ_β))
+        ) +
+        δ_neg(x)
+    ) *
+    sqrt(m * s(x))
 
 const c(x, v) =                                     # Feedback stiffness term
     (1 - sigm_γ) * σ_zweig(x) *
     (
-1 /
-(1 + exp.((Λ.(v) .- sigm_α) / sigm_μ_α))
-) +
+        1 /
+        (1 + exp.((Λ.(v) .- sigm_α) / sigm_μ_α))
+    ) +
     sigm_γ * σ_zweig(x) *
     (
-1 /
-(1 + exp((Λ.(v) - sigm_β) / sigm_μ_β))
-)
+        1 /
+        (1 + exp((Λ.(v) - sigm_β) / sigm_μ_β))
+    )
 
 const ϵ = 0.01                                      # Roughness scaling coefficient
 const N_s_rough = randn(rng, n)                     # Normal distribution samples with
@@ -118,10 +118,10 @@ function u_history(
     idxs=nothing,
 )
     if idxs == nothing
-u0
+        u0
     else
-u0[idxs]
-end
+        u0[idxs]
+    end
 end
 const tspan = (0.0, 0.100)
 
@@ -146,11 +146,19 @@ y, v = @views u[:, 1:2:end], u[:, 2:2:end]
 ρ_inst = instantaneous_rotation(u, du)
 
 begin
-    osc_idx_range = 10:10
-    t_min = 0.050
-    t_max = 0.100
-    t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
+    osc_idx_range = 800:1000
+    t_min = 0.09000
+    t_max = 0.10000
+    t_idx_range = Int(floor(t_min * fs)) + 1:Int(floor(t_max * fs)) + 1
     heatmap(osc_idx_range, t[t_idx_range], v[t_idx_range, osc_idx_range])
+end
+
+begin
+    osc_idx_range = 250:255
+    t_min = 0.01000
+    t_max = 0.01100
+    t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
+    plot(t[t_idx_range], v[t_idx_range, osc_idx_range], leg=false)
 end
 
 begin
@@ -163,7 +171,7 @@ begin
 end
 
 # begin
-#     x = 0.000
+    #     x = 0.000
 #     v = logrange(1e-9, 1e-2, 100)
 #     plot()
 #     plot!(Λ.(v), d.(x, v) / sqrt(m * s(x)))

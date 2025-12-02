@@ -20,7 +20,7 @@ function cochlea_transmission_line!(
     y_delayed = history_broadcast_wrapper.(Ref(param), t .- τ, 1:2:2n-1)
 
     # Calculate the force from the intrinsic dynamics of the CP
-    g = d.(x, v) .* v + s(x) .* (y + c.(x, v) .* y_delayed)
+    g = d.(x, v) .* v + s.(x) .* (y + c.(x, v) .* y_delayed)
 
     # build the stimulus vector
     b = [stimulus(t); zeros(n - 1)]

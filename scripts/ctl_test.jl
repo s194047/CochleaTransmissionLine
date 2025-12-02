@@ -19,11 +19,11 @@ const x = LinRange(0.0, x_apex, n)                  # Longitudinal coordinate
 # Intrinsic paramters
 # ===================
 
-const A = 20_832                                    # x-f map coefficient
+const x_f_coeff = 20_832                            # x-f map coefficient
 const λ = 60                                        # x-f map length constant
 const κ = 145.5                                     # x-f map correction
 
-const f_R(x) = A .* 10 .^ (-λ * x) .- κ                # place-frequency (x-f) map
+const f_R(x) = x_f_coeff .* 10 .^ (-λ * x) .- κ     # place-frequency (x-f) map
 const τ = 1.742 ./ f_R.(x)                          # Delay of feedback stiffness
 
 const v_ref = 1e-6                                  # Reference velocity
@@ -83,13 +83,15 @@ const s_rough = s.(x) .* (1 .+ ϵ * N_s_rough)       # Membrane stiffness with r
 
 const β = 0.1               # Fluid mass to CP mass ratio
 const K = -2.0 - β
-const A, B = K - 1.0, 1.0
-const Y, Z = 1.0, -(1 + β) # + helicotrema_mass_ratio)
+const bound_A = K - 1.0
+const bound_B = 1.0
+const bound_Y = 1.0
+const bound_Z = -(1 + β)    # + helicotrema_mass_ratio)
 const M =                   # Coupling matrix
 Tridiagonal(
-    [B; ones(n - 2)],
-    [A; K * ones(n - 2); Z],
-    [ones(n - 2); Y],
+    [bound_B; ones(n - 2)],
+    [bound_A; K * ones(n - 2); bound_Z],
+    [ones(n - 2); bound_Y],
 )
 
 const inv_M = inv(M)        # Inverse coupling matrix

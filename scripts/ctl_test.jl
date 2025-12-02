@@ -40,6 +40,8 @@ const δ_neg(x) = -0.12 * 10^(-0.17 * x / x_apex)    # Negative damping
 const σ_zweig(x) = 0.1416 * 10^(-0.17 * x / x_apex) # Feedback stiffness amplitude
 
 const m = 0.375                                     # Membrane mass per unit area
+
+# TODO: Should we remove all x dependency and instead vectorize it?
 const s(x) = m * 4π^2 * f_R(x) .^ 2                 # Membrane stiffness
 
 const d(x, v) =                                     # Membrane damping

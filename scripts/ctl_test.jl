@@ -146,8 +146,18 @@ fs = 1e5 # Sampling rate (Hz)
 t, u = get_solution_samples(solution, fs)
 _, du = get_solution_samples(solution, fs, Val{1})
 y, v = @views u[:, 1:2:end], u[:, 2:2:end]
+dy, dv = @views du[:, 1:2:end], du[:, 2:2:end]
 
-ρ_inst = instantaneous_rotation(u, du)
+# TODO: Consider putting the scaling into a function in data analysis
+ω_R = 2π * stack([f_R.(x)], dims=1)
+u_scaled = copy(u)
+du_scaled = copy(du)
+v_scaled = @view u_scaled[:, 2:2:end]
+dv_scaled = @view du_scaled[:, 2:2:end]
+v_scaled .= v ./ ω_R
+dv_scaled .= dv ./ ω_R
+
+ρ_inst = instantaneous_rotation(u_scaled, du_scaled)
 
 begin
     osc_idx_range = 800:1000

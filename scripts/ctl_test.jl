@@ -141,7 +141,7 @@ algorithm = MethodOfSteps(Tsit5())
 
 simulation_time = @elapsed solution = solve(problem, algorithm)
 
-fs = 1e5 # Sampling rate (Hz)
+fs = 1e6 # Sampling rate (Hz)
 
 t, u = get_solution_samples(solution, fs)
 _, du = get_solution_samples(solution, fs, Val{1})

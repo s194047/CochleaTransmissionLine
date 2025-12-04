@@ -160,7 +160,14 @@ dv_scaled .= dv ./ ω_R
 ρ_inst = instantaneous_rotation(u_scaled, du_scaled)
 
 begin
-    osc_idx_range = 800:1000
+    osc_idx_range = 1:500
+    t_min = 0.09500
+    t_max = 0.10000
+    t_idx_range = Int(floor(t_min * fs)) + 1:Int(floor(t_max * fs)) + 1
+    heatmap(osc_idx_range, t[t_idx_range], v[t_idx_range, osc_idx_range])
+end
+begin
+    osc_idx_range = 500:1000
     t_min = 0.09000
     t_max = 0.10000
     t_idx_range = Int(floor(t_min * fs)) + 1:Int(floor(t_max * fs)) + 1
@@ -182,6 +189,7 @@ begin
     t_idx_range = Int(floor(t_min * fs)):Int(floor(t_max * fs))
     ρ_mean = vec(mean(ρ_inst[t_idx_range, osc_idx_range], dims=1))
     scatter(osc_idx_range, ρ_mean, leg=false)
+    ylims!(0, 30_000)
 end
 
 # begin

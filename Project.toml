@@ -4,12 +4,16 @@ version = "0.1.0"
 authors = ["Sofus Dawids <s194047@dtu.dk>"]
 
 [deps]
+DelayDiffEq = "bcd4f6db-9728-5f36-b5f7-82caef46ccdb"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 
 [compat]
+DelayDiffEq = "5.62.0"
+JLD2 = "0.6.3"
 LinearAlgebra = "1.12.0"
 OrdinaryDiffEq = "6.103.0"
 Plots = "1.41.1"

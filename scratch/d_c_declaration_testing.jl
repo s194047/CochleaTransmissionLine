@@ -2,8 +2,11 @@ using Parameters
 
 #=
 TODO:
-- Move all constants to CochleaTransmissionLineParams.
-- Unpack in “const d, c = ...” block
+- Move all constants to CochleaTransmissionLineParams. (missing v_ref)
+- Fix name clash (β)
+- Move default values from CochleaTransmissionLineParams to instantiation variable somewhere (this file for Proof-of-Concept)
+- Unpack CochleaSolverInputParams in “const d, c = ...” block
+  Assign to d_impl and c_impl using kw arguments to avoid position errors – especially when refactoring.
 =#
 
 
@@ -45,6 +48,22 @@ TODO:
     #σ_zweig = x_norm -> 0.1416 * 10^(-0.17 * x_norm);
     σ_zweig_a = 0.1416
     σ_zweig_k = -0.17
+
+    # FIXME: Name clashes (β)
+    # Amplitude of plateau
+    γ = 0.12;
+
+    # Middle turning point velocity
+    α = 40;
+
+    # Slope at middle turning point
+    μ_α = 6;
+
+    # Lower turning point velocity
+    β = -10;
+
+    # Slope at lower turning point
+    μ_β = 5;
 end
 
 ## FIXME: Calculated / derived parameters
@@ -98,43 +117,13 @@ const makeCochleaSolverInputParams(ctl_params::CochleaTransmissionLineParams) ::
 
 #const default_parameters =
 
-# Membrane mass per unit area
-const m = () -> 0.375
+
 
 # Velocity level in dB
 v_ref = 1e-6;
 
-# Amplitude of plateau
-γ = 0.12;
 
-# Middle turning point velocity
-α = 40;
 
-# Slope at middle turning point
-μ_α = 6;
-
-# Lower turning point velocity
-β = -10;
-
-# Slope at lower turning point
-μ_β = 5;
-
-sigmoid_scaling(x_norm, a, k) = a * 10^(k * x_norm)
-
-# Damping saturation
-#δ_sat = x_norm -> 0.2 * 10^(0.52 * x_norm);
-δ_sat_a = 0.2
-δ_sat_k = 0.52
-
-# Negative damping
-#δ_neg = x_norm -> -0.12 * 10^(-0.17 * x_norm);
-δ_neg_a = -0.12
-δ_neg_k = -0.17
-
-# Feedback stiffness amplitude
-#σ_zweig = x_norm -> 0.1416 * 10^(-0.17 * x_norm);
-σ_zweig_a = 0.1416
-σ_zweig_k = -0.17
 
 ############################
 # Functions

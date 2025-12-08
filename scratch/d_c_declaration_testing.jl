@@ -2,11 +2,11 @@ using Parameters
 
 #=
 TODO:
-- Move all constants to CochleaTransmissionLineParams. (missing v_ref)
 - Fix name clash (β)
 - Move default values from CochleaTransmissionLineParams to instantiation variable somewhere (this file for Proof-of-Concept)
 - Unpack CochleaSolverInputParams in “const d, c = ...” block
   Assign to d_impl and c_impl using kw arguments to avoid position errors – especially when refactoring.
+- d_impl and c_impl take v_norm (= v ./ v_ref). v_ref used in solver function before calling d and c.
 =#
 
 
@@ -33,6 +33,9 @@ TODO:
     x_f_coeff = 20_832                            # x-f map coefficient
     λ = 60                                        # x-f map length constant
     κ = 145.5                                     # x-f map correction
+
+    # Velocity level in dB
+    v_ref = 1e-6;
 
     # Damping saturation
     #δ_sat = x_norm -> 0.2 * 10^(0.52 * x_norm);
@@ -116,14 +119,6 @@ const makeCochleaSolverInputParams(ctl_params::CochleaTransmissionLineParams) ::
     end
 
 #const default_parameters =
-
-
-
-# Velocity level in dB
-v_ref = 1e-6;
-
-
-
 
 ############################
 # Functions

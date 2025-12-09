@@ -111,9 +111,9 @@ const f_R(
         x_f_coeff .* 10 .^ (-λ * x_positions) .- κ
     end
 
-const sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
+const calculate_sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
 
-const inverse_coupling_matrix(n::Int64, fluid_CP_β::Float64) :: Matrix{Float64} =
+const calculate_inverse_coupling_matrix(n::Int64, fluid_CP_β::Float64) :: Matrix{Float64} =
 let
     K = -2.0 - fluid_CP_β;
     boundary_A = K - 1.0;
@@ -148,16 +148,16 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
         x_positions = x_norm_positions * x_apex_value;
         f_values = f_R(x_positions = x_positions, x_f_coeff = x_f_coeff, λ = λ, κ = κ);
         s_values = m * 4π^2 * f_values .^ 2;
-        inv_M = inverse_coupling_matrix(n, fluid_CP_β);
+        inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β);
 
         CochleaTransmissionLineParams(
             x_norm_positions = x_norm_positions,
             τ_values = 1.742 ./ f_values,
             s_values = s_values,
             sqrt_m_times_s_values = sqrt.(m * s_values),
-            δ_sat_values = sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
-            δ_neg_values = sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
-            σ_zweig_values = sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
+            δ_sat_values = calculate_sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
+            δ_neg_values = calculate_sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
+            σ_zweig_values = calculate_sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
             inv_M = inv_M,
         )
     end

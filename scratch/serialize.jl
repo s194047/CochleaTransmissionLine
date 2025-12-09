@@ -1,33 +1,36 @@
-struct Params
+struct Constants
     i::Int64
 end
 
-struct ParamsWithCalc
-    params::Params
-    j::Int64
+struct Params
+    v::Vector{Float64}
 end
 
-struct SolverFunctions
+struct Functions
     d::Function
     c::Function
     stimulus::Function
 end
 
-struct SolverParams
-    p2::ParamsWithCalc
-    functions::SolverFunctions
+struct SolverInputParams
+    constants::Constants
+    params::Params
+    functions::Functions
+end
+
+struct SolverInputParamsNoFunctions
+    constants::Constants
+    params::Params
 end
 
 
-struct SolverOutput
+struct ODESolution
     ...
     ...
     ...
-    p::SolverParams
+    p::SolverInputParams
     ...
 end
 
-const makeSolverParams(p2::SolverParams) =
-    SolverParams(p2 = p2,
-
-const save_result(SolverParams)
+# Before save of ODESolution to disk, replace p with SolverInputParamsNoFunctions
+# After load of ODESolution from disk, replace p with SolverInputParams (recalculated functions, or you might have SolverInputParams already)

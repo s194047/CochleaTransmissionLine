@@ -86,7 +86,10 @@ end
 end
 
 @kwdef struct CochleaTransmissionLineFunctions
+    # Damping
     d::Function
+
+    # Feedback stiffness
     c::Function
 end
 

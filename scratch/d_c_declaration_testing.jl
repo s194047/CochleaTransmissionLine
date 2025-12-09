@@ -148,8 +148,6 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
         x_positions = x_norm_positions * x_apex_value;
         f_values = f_R(x_positions = x_positions, x_f_coeff = x_f_coeff, λ = λ, κ = κ);
         s_values = m * 4π^2 * f_values .^ 2;
-        inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β);
-
         CochleaTransmissionLineParams(
             x_norm_positions = x_norm_positions,
             τ_values = 1.742 ./ f_values,
@@ -158,7 +156,7 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
             δ_sat_values = calculate_sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
             δ_neg_values = calculate_sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
             σ_zweig_values = calculate_sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
-            inv_M = inv_M,
+            inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β),
         )
     end
 

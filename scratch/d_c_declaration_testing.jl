@@ -8,7 +8,7 @@ using Plots
 ############################
 
 ## FIXME: Defined (physical) constants.
-@kwdef struct CochleaTransmissionLineParams
+@kwdef struct CochleaTransmissionLineConstants
     # Number of discrete segments
     n::Int64
 
@@ -65,9 +65,7 @@ using Plots
 end
 
 ## FIXME: Calculated / derived parameters
-@kwdef struct CochleaSolverInputParams
-    ctl_params::CochleaTransmissionLineParams
-
+@kwdef struct CochleaTransmissionLineParams
     # Positions along the Scala of Cochlea
     x_norm_positions::Vector{Float64}
 
@@ -87,10 +85,25 @@ end
     inv_M::Matrix{Float64}
 end
 
-const f_R(x_positions, ctl_params::CochleaTransmissionLineParams) :: Vector{Float64} =
-    let
-        (; x_f_coeff, λ, κ) = ctl_params;
+@kwdef struct CochleaTransmissionLineFunctions
+    d::Function
+    c::Function
+end
 
+@kwdef struct CochleaSolverInputParams
+    ctl_constants::CochleaTransmissionLineConstants
+    ctl_params::CochleaTransmissionLineParams
+    ctl_functions::CochleaTransmissionLineFunctions
+end
+
+const f_R(
+    ;
+    x_positions::Union{StepRangeLen{Float64}, Vector{Float64}},
+    x_f_coeff::Float64,
+    λ::Float64,
+    κ::Float64,
+) :: Vector{Float64} =
+    let
         # place-frequency (x-f) map
         x_f_coeff .* 10 .^ (-λ * x_positions) .- κ
     end
@@ -113,31 +126,28 @@ let
     )
 end
 
-const makeCochleaSolverInputParams(ctl_params::CochleaTransmissionLineParams) :: CochleaSolverInputParams =
+const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineConstants) :: CochleaTransmissionLineParams =
     let
         (
             ;
             n,
             x_apex_value,
             m,
-            δ_sat_a,
-            δ_sat_k,
-            δ_neg_a,
-            δ_neg_k,
-            σ_zweig_a,
-            σ_zweig_k,
-            fluid_CP_β
-        ) = ctl_params;
+            x_f_coeff, λ, κ,
+            δ_sat_a, δ_sat_k,
+            δ_neg_a, δ_neg_k,
+            σ_zweig_a, σ_zweig_k,
+            fluid_CP_β,
+        ) = ctl_constants;
 
         x_indices = 0:n;
         x_norm_positions = x_indices / n;
         x_positions = x_norm_positions * x_apex_value;
-        f_values = f_R(x_positions, ctl_params);
+        f_values = f_R(x_positions = x_positions, x_f_coeff = x_f_coeff, λ = λ, κ = κ);
         s_values = m * 4π^2 * f_values .^ 2;
         M = coupling_matrix(n, fluid_CP_β);
 
-        CochleaSolverInputParams(
-            ctl_params = ctl_params,
+        CochleaTransmissionLineParams(
             x_norm_positions = x_norm_positions,
             τ_values = 1.742 ./ f_values,
             s_values = s_values,
@@ -204,7 +214,7 @@ end
 # instantiation
 ############################
 
-const ctl_params = CochleaTransmissionLineParams(
+const ctl_constants = CochleaTransmissionLineConstants(
     n = 1000,
     x_apex_value = 0.035,
     m = 0.375,
@@ -226,86 +236,110 @@ const ctl_params = CochleaTransmissionLineParams(
     fluid_CP_β = 6.53e-3,
 )
 
-const cochlea_solver_input_params = makeCochleaSolverInputParams(ctl_params)
+const makeCochleaTransmissionLineFunctions(
+    ctl_constants::CochleaTransmissionLineConstants,
+    ctl_params::CochleaTransmissionLineParams,
+) :: CochleaTransmissionLineFunctions =
+    let
+        (
+            ;
+            α,
+            μ_α,
+            β,
+            μ_β,
+            γ,
+        ) = ctl_constants;
+        (
+            ;
+            δ_sat_values,
+            δ_neg_values,
+            σ_zweig_values,
+            sqrt_m_times_s_values,
+        ) = ctl_params;
 
-const d, c =
-let
-    (
-        ;
-        ctl_params,
-        δ_sat_values,
-        δ_neg_values,
-        σ_zweig_values,
-        sqrt_m_times_s_values,
-    ) = cochlea_solver_input_params;
-    (
-        ;
-        α,
-        μ_α,
-        β,
-        μ_β,
-        γ,
-    ) = ctl_params;
+        d = (x_index, v_db) -> d_impl(
+            x_index = x_index,
+            v_db = v_db,
+            α = α,
+            μ_α = μ_α,
+            β = β,
+            μ_β = μ_β,
+            γ = γ,
+            δ_sat_values = δ_sat_values,
+            δ_neg_values = δ_neg_values,
+            sqrt_m_times_s_values = sqrt_m_times_s_values,
+        );
+        c = (x_index, v_db) -> c_impl(
+            x_index = x_index,
+            v_db = v_db,
+            α = α,
+            μ_α = μ_α,
+            β = β,
+            μ_β = μ_β,
+            γ = γ,
+            σ_zweig_values = σ_zweig_values,
+        );
 
-    d = (x_index, v_db) -> d_impl(
-        x_index = x_index,
-        v_db = v_db,
-        α = α,
-        μ_α = μ_α,
-        β = β,
-        μ_β = μ_β,
-        γ = γ,
-        δ_sat_values = δ_sat_values,
-        δ_neg_values = δ_neg_values,
-        sqrt_m_times_s_values = sqrt_m_times_s_values,
-    );
-    c = (x_index, v_db) -> c_impl(
-        x_index = x_index,
-        v_db = v_db,
-        α = α,
-        μ_α = μ_α,
-        β = β,
-        μ_β = μ_β,
-        γ = γ,
-        σ_zweig_values = σ_zweig_values,
-    );
+        CochleaTransmissionLineFunctions(d = d, c = c)
+    end
 
-    (d, c)
+const makeCochleaSolverInputParams(
+    ctl_constants::CochleaTransmissionLineConstants,
+) :: CochleaSolverInputParams =
+    let
+        ctl_params = makeCochleaTransmissionLineParams(ctl_constants);
+        CochleaSolverInputParams(
+            ctl_constants = ctl_constants,
+            ctl_params = ctl_params,
+            ctl_functions = makeCochleaTransmissionLineFunctions(ctl_constants, ctl_params),
+        )
+    end
+
+const cochlea_solver_input_params = makeCochleaSolverInputParams(ctl_constants)
+
+function run(cochlea_solver_input_params::CochleaSolverInputParams)
+    let
+        ctl_constants = cochlea_solver_input_params.ctl_constants;
+        ctl_params = cochlea_solver_input_params.ctl_params;
+        (; d, c) = cochlea_solver_input_params.ctl_functions;
+
+        x_index = 0
+        v = 10 * ctl_constants.v_ref
+        v_norm = v / ctl_constants.v_ref
+        v_db = amp2db(v_norm)
+
+        @show d(x_index, v_db)
+        @show c(x_index, v_db)
+        @show d(x_index, v_db) / ctl_params.sqrt_m_times_s_values[x_index+1]
+
+        v_db_range = LinRange(-60, 90, 1000)
+        x_index = 0
+
+        d_values_unscaled =
+            d.(x_index, v_db_range) ./
+            ctl_params.sqrt_m_times_s_values[x_index+1]
+        c_values = c.(x_index, v_db_range)
+
+        x_lim_min = -60
+        x_lim_max = 90
+        x_tick_step = 20
+        y_lim_min = -0.2
+        y_lim_max = 0.5
+        y_tick_step = 0.1
+
+        xlims!(x_lim_min, x_lim_max)
+        xticks!(x_lim_min:x_tick_step:x_lim_max)
+        ylims!(y_lim_min, y_lim_max)
+        yticks!(y_lim_min:y_tick_step:y_lim_max)
+
+        plot!(v_db_range, d_values_unscaled, linewidth=2, color=:black, label="unscaled damping")
+        plot!(v_db_range, c_values, linewidth=2, color=:grey, label="feedback stiffness")
+
+        xlabel!("velocity / dB")
+        ylabel!("coefficient")
+
+        savefig("figures/test.png")
+    end
 end
 
-x_index = 0
-v = 10 * ctl_params.v_ref
-v_norm = v / ctl_params.v_ref
-v_db = amp2db(v_norm)
-
-@show d(x_index, v_db)
-@show c(x_index, v_db)
-@show d(x_index, v_db) / cochlea_solver_input_params.sqrt_m_times_s_values[x_index+1]
-
-v_db_range = LinRange(-60, 90, 1000)
-x_index = 0
-
-d_values_unscaled =
-    d.(x_index, v_db_range) ./
-    cochlea_solver_input_params.sqrt_m_times_s_values[x_index+1]
-c_values = c.(x_index, v_db_range)
-
-x_lim_min = -60
-x_lim_max = 90
-x_tick_step = 20
-y_lim_min = -0.2
-y_lim_max = 0.5
-y_tick_step = 0.1
-
-xlims!(x_lim_min, x_lim_max)
-xticks!(x_lim_min:x_tick_step:x_lim_max)
-ylims!(y_lim_min, y_lim_max)
-yticks!(y_lim_min:y_tick_step:y_lim_max)
-
-plot!(v_db_range, d_values_unscaled, linewidth=2, color=:black, label="unscaled damping")
-plot!(v_db_range, c_values, linewidth=2, color=:grey, label="feedback stiffness")
-
-xlabel!("velocity / dB")
-ylabel!("coefficient")
-
-savefig("figures/test.png")
+run(cochlea_solver_input_params)

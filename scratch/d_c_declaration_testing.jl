@@ -113,20 +113,20 @@ const f_R(
 
 const sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
 
-const coupling_matrix(n::Int64, fluid_CP_β::Float64) :: Matrix{Float64} =
+const inverse_coupling_matrix(n::Int64, fluid_CP_β::Float64) :: Matrix{Float64} =
 let
     K = -2.0 - fluid_CP_β;
     boundary_A = K - 1.0;
     boundary_B = 1.0;
     boundary_Y = 1.0;
     boundary_Z = -(1 + fluid_CP_β);    # + helicotrema_mass_ratio)
-
     M =
     Tridiagonal(
-        [boundary_B; ones(n - 2)],
-        [boundary_A; K * ones(n - 2); boundary_Z],
-        [ones(n - 2); boundary_Y],
-    )
+        [boundary_B; ones(n - 1)],
+        [boundary_A; K * ones(n - 1); boundary_Z],
+        [ones(n - 1); boundary_Y],
+    );
+    inv(M)
 end
 
 const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineConstants) :: CochleaTransmissionLineParams =
@@ -148,7 +148,7 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
         x_positions = x_norm_positions * x_apex_value;
         f_values = f_R(x_positions = x_positions, x_f_coeff = x_f_coeff, λ = λ, κ = κ);
         s_values = m * 4π^2 * f_values .^ 2;
-        M = coupling_matrix(n, fluid_CP_β);
+        inv_M = inverse_coupling_matrix(n, fluid_CP_β);
 
         CochleaTransmissionLineParams(
             x_norm_positions = x_norm_positions,
@@ -158,7 +158,7 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
             δ_sat_values = sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
             δ_neg_values = sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
             σ_zweig_values = sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
-            inv_M = inv(M)
+            inv_M = inv_M,
         )
     end
 

@@ -19,7 +19,7 @@ using Plots
     m::Float64
 
     # x-f map coefficient
-    x_f_coeff::Float64
+    A::Float64
 
     # x-f map length constant
     λ::Float64
@@ -99,16 +99,16 @@ end
     ctl_functions::CochleaTransmissionLineFunctions
 end
 
-const f_R(
+const calculate_frequencies(
     ;
     x_positions::Union{StepRangeLen{Float64}, Vector{Float64}},
-    x_f_coeff::Float64,
+    A::Float64,
     λ::Float64,
     κ::Float64,
 ) :: Vector{Float64} =
     let
         # place-frequency (x-f) map
-        x_f_coeff .* 10 .^ (-λ * x_positions) .- κ
+        A .* 10 .^ (-λ * x_positions) .- κ
     end
 
 const calculate_sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
@@ -116,15 +116,15 @@ const calculate_sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Floa
 const calculate_inverse_coupling_matrix(n::Int64, fluid_CP_β::Float64) :: Matrix{Float64} =
 let
     K = -2.0 - fluid_CP_β;
-    boundary_A = K - 1.0;
-    boundary_B = 1.0;
-    boundary_Y = 1.0;
-    boundary_Z = -(1 + fluid_CP_β);    # + helicotrema_mass_ratio)
+    A = K - 1.0;
+    B = 1.0;
+    Y = 1.0;
+    Z = -(1 + fluid_CP_β);    # + helicotrema_mass_ratio)
     M =
     Tridiagonal(
-        [boundary_B; ones(n - 1)],
-        [boundary_A; K * ones(n - 1); boundary_Z],
-        [ones(n - 1); boundary_Y],
+        [B; ones(n - 1)],
+        [A; K * ones(n - 1); Z],
+        [ones(n - 1); Y],
     );
     inv(M)
 end
@@ -136,7 +136,7 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
             n,
             x_apex_value,
             m,
-            x_f_coeff, λ, κ,
+            A, λ, κ,
             δ_sat_a, δ_sat_k,
             δ_neg_a, δ_neg_k,
             σ_zweig_a, σ_zweig_k,
@@ -146,7 +146,7 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
         x_indices = 0:n;
         x_norm_positions = x_indices / n;
         x_positions = x_norm_positions * x_apex_value;
-        f_values = f_R(x_positions = x_positions, x_f_coeff = x_f_coeff, λ = λ, κ = κ);
+        f_values = calculate_frequencies(x_positions = x_positions, A = A, λ = λ, κ = κ);
         s_values = m * 4π^2 * f_values .^ 2;
         CochleaTransmissionLineParams(
             x_norm_positions = x_norm_positions,
@@ -219,7 +219,7 @@ const ctl_constants = CochleaTransmissionLineConstants(
     n = 1000,
     x_apex_value = 0.035,
     m = 0.375,
-    x_f_coeff = 20_832,
+    A = 20_832,
     λ = 60,
     κ = 145.5,
     v_ref = 1e-6,

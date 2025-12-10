@@ -99,6 +99,16 @@ end
     ctl_functions::CochleaTransmissionLineFunctions
 end
 
+# TODO: streamline the "calculate" functions to either take and return a vector or
+#       single values. If they take single values, they should be broadcast when called.
+"""
+    Calculate Frequencies
+
+Calculates the frequencies of the Greenwood frequency map for each position.
+The frequency map is defined by the parameters `A` (x-f map coefficient), `λ` (x-f map length constant), and `κ` (x-f map correction).
+
+The frequencies are is returned as a vector of same length as `x_positions`.
+"""
 const calculate_frequencies(
     ;
     x_positions::Union{StepRangeLen{Float64}, Vector{Float64}},
@@ -111,8 +121,20 @@ const calculate_frequencies(
         A .* 10 .^ (-λ * x_positions) .- κ
     end
 
+"""
+    Calculate Sigmoid Scaling
+
+Calculates a scaling parameter for a sigmoid function which varies over the length `x` of the cochlea transmission line model.
+"""
 const calculate_sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
 
+"""
+    Calculate Inverse Coupling Matrix
+
+The transmission line is defined by a second-order spatial derivative (Laplacian operator ∇²), which is discretized into a spatial difference equation with a Laplacian matrix. The full matrix `M` in the difference equation is the Laplacian matrix subtracted with the fluid to CP mass  `β` along the diagonal.
+
+When solving the time-differential equation, the inverse of the matrix `M` needs to be applied to the state and stimulus. Using the inverse of `M` is equivalent to solving the spatial equation through gaussian elimination. The coupling parameters are time independent so the inverse of `M` should only be calculated once.
+"""
 const calculate_inverse_coupling_matrix(n::Int64, fluid_CP_β::Float64) :: Matrix{Float64} =
 let
     K = -2.0 - fluid_CP_β;
@@ -167,6 +189,8 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
 # TODO: Implement a way to choose stimulus functions (e.g., sinusoidal, impulse, audio-file).
 const stimulus(t::Float64) :: Float64 = 0.0
 
+# TODO: Consider if it's more efficient to implement d and c to work on a vector
+#       rather than a single value.
 # Damping
 const d_impl(
     ;

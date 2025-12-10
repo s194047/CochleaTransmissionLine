@@ -1,8 +1,10 @@
+using DSP
+
 function cochlea_transmission_line!(
     du::Vector{Float64},
     u::Vector{Float64},
     u_history, # History function
-    param::CochleaTransmissionLineParam,
+    solver_params::CochleaSolverInputParams,
     t::Float64,
 )
     # Define views for state and derivative of the
@@ -11,26 +13,35 @@ function cochlea_transmission_line!(
     y, v = @views u[1:2:end], u[2:2:end]
 
     # Extract parameters
-    n, x = param.n, param.x
-    m, d, s, c, τ = param.m, param.d, param.s, param.c, param.τ
-    β, inv_M, stimulus = param.β, param.inv_M, param.stimulus
+    (; ctl_constants, ctl_params, ctl_functions) = solver_params
+    (; n, m, v_ref, fluid_CP_β) = ctl_constants
+    (; x_norm_positions, τ_values, s_values, inv_M) = ctl_params
+    (; d, c) = ctl_functions
 
     # Wrap history function and evaluate delayed values of y
-    history_broadcast_wrapper(param, t, idxs) = u_history(param, t, idxs=idxs)
-    y_delayed = history_broadcast_wrapper.(Ref(param), t .- τ, 1:2:2n-1)
+    history_broadcast_wrapper(p, t, idxs) = u_history(p, t, idxs=idxs)
+    y_delayed = history_broadcast_wrapper.(
+        Ref(solver_params),
+        t .- τ_values,
+        1:2:2n+1,
+    )
+
+    # Calculate decibel value of v
+    v_db = amp2db.(abs.(v ./ v_ref))
 
     # Calculate the force from the intrinsic dynamics of the CP
-    g = d.(x, v) .* v + s.(x) .* (y + c.(x, v) .* y_delayed)
+    g = d.(0:n, v_db) .* v +
+        s_values .* (y + c.(0:n, v_db) .* y_delayed)
 
-    # build the stimulus vector
-    b = [stimulus(t); zeros(n - 1)]
+    # Build the stimulus vector
+    b = [stimulus(t); zeros(n - 1); 0.0] # should be apex]
 
     dy .= v
     dv .= 1 / m * (
         -g +
         inv_M * (
-           β .* g +
-           b
+            -fluid_CP_β .* g +
+            b
         )
     )
 

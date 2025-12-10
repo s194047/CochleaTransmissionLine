@@ -99,8 +99,6 @@ end
     ctl_functions::CochleaTransmissionLineFunctions
 end
 
-# TODO: streamline the "calculate" functions to either take and return a vector or
-#       single values. If they take single values, they should be broadcast when called.
 """
     Calculate Frequencies
 
@@ -186,10 +184,8 @@ const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineCo
 # Functions
 ############################
 
-# TODO: Implement a way to choose stimulus functions (e.g., sinusoidal, impulse, audio-file).
 const stimulus(t::Float64) :: Float64 = 0.0
 
-# TODO: Consider if it's more efficient to implement d and c to work on a vector
 #       rather than a single value.
 # Damping
 const d_impl(

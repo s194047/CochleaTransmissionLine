@@ -154,6 +154,9 @@ Define Parameter Types
     # Slope at lower turning point
     μ_β::Float64
 
+    # FIXME: β is actually the mass ratio scaled by the spatial discretization step: β = Δx² * κ
+    #        κ should be given as a constant or calculated from ρ, m and h as: κ = 2ρ / (m * h).
+    #        Δx should be calculated as: Δx = x_apex_value / n
     # Fluid mass to CP mass ratio
     fluid_CP_β::Float64
 end

@@ -1,18 +1,17 @@
 module CochleaTransmissionLine
 
-include("params.jl")
+include("model.jl")
 export CochleaTransmissionLineConstants
 export CochleaSolverInputParams
 export makeCochleaSolverInputParams
-
-include("model.jl")
 export cochlea_transmission_line!
+
+include("params.jl")
+export default_ctl_constants
+export default_u0_value
 
 include("data_analysis.jl")
 export get_solution_samples
 export instantaneous_rotation
-
-export default_ctl_constants
-export default_u0_value
 
 end # module CochleaTransmissionLine

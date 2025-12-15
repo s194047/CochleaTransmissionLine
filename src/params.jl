@@ -1,5 +1,3 @@
-module Params
-
 #================
 Default constants
 ================#
@@ -30,5 +28,3 @@ const default_u0_value = [1e-9, 0.0]
 
 # TODO: Implement a way to choose stimulus functions (e.g., sinusoidal, impulse, audio-file).
 const stimulus(t::Float64) :: Float64 = 0.0
-
-end # module Params

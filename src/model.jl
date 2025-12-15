@@ -1,100 +1,5 @@
-module Model
-
 using DSP
 using LinearAlgebra
-
-function cochlea_transmission_line!(
-    du::Vector{Float64},
-    u::Vector{Float64},
-    u_history, # History function
-    solver_params::CochleaSolverInputParams,
-    t::Float64,
-)
-    # Define views for state and derivative of the
-    # transverse displacement y and transverse velocity v
-    dy, dv = @views du[1:2:end], du[2:2:end]
-    y, v = @views u[1:2:end], u[2:2:end]
-
-    # Extract parameters
-    (; ctl_constants, ctl_params, ctl_functions) = solver_params
-    (; n, m, v_ref, fluid_CP_β) = ctl_constants
-    (; x_norm_positions, τ_values, s_values, inv_M) = ctl_params
-    (; d, c) = ctl_functions
-
-    # Wrap history function and evaluate delayed values of y
-    history_broadcast_wrapper(p, t, idxs) = u_history(p, t, idxs=idxs)
-    y_delayed = history_broadcast_wrapper.(
-        Ref(solver_params),
-        t .- τ_values,
-        1:2:2n+1,
-    )
-
-    # Calculate decibel value of v
-    v_db = amp2db.(abs.(v ./ v_ref))
-
-    # Calculate the force from the intrinsic dynamics of the CP
-    g = d.(0:n, v_db) .* v +
-        s_values .* (y + c.(0:n, v_db) .* y_delayed)
-
-    # Build the stimulus vector
-    b = [stimulus(t); zeros(n - 1); 0.0] # should be apex]
-
-    dy .= v
-    dv .= 1 / m * (
-        -g +
-        inv_M * (
-            -fluid_CP_β .* g +
-            b
-        )
-    )
-
-    nothing
-end
-
-# TODO: Consider if it's more efficient to implement d and c to work on a vector
-# Damping
-const damping_impl(
-    ;
-    x_index,
-    v_db,
-    α,
-    μ_α,
-    β,
-    μ_β,
-    γ,
-    δ_sat_values,
-    δ_neg_values,
-    sqrt_m_times_s_values,
-) = let
-        δ_sat = δ_sat_values[x_index+1];
-        δ_neg = δ_neg_values[x_index+1];
-        δ = δ_sat - δ_neg;
-        sqrt_m_times_s = sqrt_m_times_s_values[x_index+1];
-
-        (
-            (1 - γ) * δ * ( 1 - 1 / (1 + exp((v_db - α) / μ_α)) ) +
-            γ       * δ * ( 1 - 1 / (1 + exp((v_db - β) / μ_β)) ) +
-            δ_neg
-        ) * sqrt_m_times_s
-end
-
-# Feedback stiffness
-const feedback_stiffness_impl(
-    ;
-    x_index,
-    v_db,
-    α,
-    μ_α,
-    β,
-    μ_β,
-    γ,
-    σ_zweig_values,
-) = let
-        σ_zweig = σ_zweig_values[x_index+1];
-
-        (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
-        γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
-end
 
 #=====================
 Define Parameter Types
@@ -193,6 +98,103 @@ end
     ctl_constants::CochleaTransmissionLineConstants
     ctl_params::CochleaTransmissionLineParams
     ctl_functions::CochleaTransmissionLineFunctions
+end
+
+#====================================
+Differential Equation for the Problem
+====================================#
+
+function cochlea_transmission_line!(
+    du::Vector{Float64},
+    u::Vector{Float64},
+    u_history, # History function
+    solver_params::CochleaSolverInputParams,
+    t::Float64,
+)
+    # Define views for state and derivative of the
+    # transverse displacement y and transverse velocity v
+    dy, dv = @views du[1:2:end], du[2:2:end]
+    y, v = @views u[1:2:end], u[2:2:end]
+
+    # Extract parameters
+    (; ctl_constants, ctl_params, ctl_functions) = solver_params
+    (; n, m, v_ref, fluid_CP_β) = ctl_constants
+    (; x_norm_positions, τ_values, s_values, inv_M) = ctl_params
+    (; d, c) = ctl_functions
+
+    # Wrap history function and evaluate delayed values of y
+    history_broadcast_wrapper(p, t, idxs) = u_history(p, t, idxs=idxs)
+    y_delayed = history_broadcast_wrapper.(
+        Ref(solver_params),
+        t .- τ_values,
+        1:2:2n+1,
+    )
+
+    # Calculate decibel value of v
+    v_db = amp2db.(abs.(v ./ v_ref))
+
+    # Calculate the force from the intrinsic dynamics of the CP
+    g = d.(0:n, v_db) .* v +
+        s_values .* (y + c.(0:n, v_db) .* y_delayed)
+
+    # Build the stimulus vector
+    b = [stimulus(t); zeros(n - 1); 0.0] # should be apex]
+
+    dy .= v
+    dv .= 1 / m * (
+        -g +
+        inv_M * (
+            -fluid_CP_β .* g +
+            b
+        )
+    )
+
+    nothing
+end
+
+# TODO: Consider if it's more efficient to implement d and c to work on a vector
+# Damping
+const damping_impl(
+    ;
+    x_index,
+    v_db,
+    α,
+    μ_α,
+    β,
+    μ_β,
+    γ,
+    δ_sat_values,
+    δ_neg_values,
+    sqrt_m_times_s_values,
+) = let
+        δ_sat = δ_sat_values[x_index+1];
+        δ_neg = δ_neg_values[x_index+1];
+        δ = δ_sat - δ_neg;
+        sqrt_m_times_s = sqrt_m_times_s_values[x_index+1];
+
+        (
+            (1 - γ) * δ * ( 1 - 1 / (1 + exp((v_db - α) / μ_α)) ) +
+            γ       * δ * ( 1 - 1 / (1 + exp((v_db - β) / μ_β)) ) +
+            δ_neg
+        ) * sqrt_m_times_s
+end
+
+# Feedback stiffness
+const feedback_stiffness_impl(
+    ;
+    x_index,
+    v_db,
+    α,
+    μ_α,
+    β,
+    μ_β,
+    γ,
+    σ_zweig_values,
+) = let
+        σ_zweig = σ_zweig_values[x_index+1];
+
+        (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
+        γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
 end
 
 #=======================================
@@ -301,7 +303,7 @@ let
         sqrt_m_times_s_values,
     ) = ctl_params;
 
-    d = (x_index, v_db) -> d_impl(
+    d = (x_index, v_db) -> damping_impl(
         x_index = x_index,
         v_db = v_db,
         α = α,
@@ -313,7 +315,7 @@ let
         δ_neg_values = δ_neg_values,
         sqrt_m_times_s_values = sqrt_m_times_s_values,
     );
-    c = (x_index, v_db) -> c_impl(
+    c = (x_index, v_db) -> feedback_stiffness_impl(
         x_index = x_index,
         v_db = v_db,
         α = α,
@@ -338,5 +340,3 @@ let
         ctl_functions = makeCochleaTransmissionLineFunctions(ctl_constants, ctl_params),
     )
 end
-
-end # module Model

@@ -1,6 +1,6 @@
 using SciMLBase: ODESolution
 
-function get_solution_samples(solution::ODESolution, t::Vector{Float64}, deriv=Val{0}; idxs=nothing)
+function get_solution_samples(solution::ODESolution, t::Union{StepRangeLen{Float64},Vector{Float64}}, deriv=Val{0}; idxs=nothing)
     x = stack(solution(t, deriv, idxs=idxs).u, dims=1)
     t, x
 end

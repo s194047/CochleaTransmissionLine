@@ -62,8 +62,8 @@ Define Parameter Types
     # FIXME: β is actually the mass ratio scaled by the spatial discretization step: β = Δx² * κ
     #        κ should be given as a constant or calculated from ρ, m and h as: κ = 2ρ / (m * h).
     #        Δx should be calculated as: Δx = x_apex_value / n
-    # Fluid mass to CP mass ratio
-    fluid_CP_β::Float64
+    # Fluid mass to Cochlear Partion mass ratio
+    fluid_CP_κ::Float64
 end
 
 @kwdef struct CochleaTransmissionLineParams
@@ -81,6 +81,9 @@ end
     δ_sat_values::Vector{Float64}
     δ_neg_values::Vector{Float64}
     σ_zweig_values::Vector{Float64}
+
+    # Scaled Fluid mass to Cochlear Partion mass ratio
+    fluid_CP_β::Float64
 
     # Inverse coupling matrix
     inv_M::Matrix{Float64}
@@ -118,8 +121,8 @@ function cochlea_transmission_line!(
 
     # Extract parameters
     (; ctl_constants, ctl_params, ctl_functions) = solver_params
-    (; n, m, v_ref, fluid_CP_β) = ctl_constants
-    (; x_norm_positions, τ_values, s_values, inv_M) = ctl_params
+    (; n, m, v_ref) = ctl_constants
+    (; x_norm_positions, τ_values, s_values, fluid_CP_β, inv_M) = ctl_params
     (; d, c) = ctl_functions
 
     # Wrap history function and evaluate delayed values of y
@@ -262,7 +265,7 @@ let
         δ_sat_a, δ_sat_k,
         δ_neg_a, δ_neg_k,
         σ_zweig_a, σ_zweig_k,
-        fluid_CP_β,
+        fluid_CP_κ,
     ) = ctl_constants;
 
     x_indices = 0:n;
@@ -270,6 +273,8 @@ let
     x_positions = x_norm_positions * x_apex_value;
     f_values = calculate_frequencies(x_positions = x_positions, A = A, λ = λ, κ = κ);
     s_values = m * 4π^2 * f_values .^ 2;
+    Δx = x_apex_value / n
+    fluid_CP_β = Δx^2 * fluid_CP_κ
     CochleaTransmissionLineParams(
         x_norm_positions = x_norm_positions,
         τ_values = 1.742 ./ f_values,
@@ -278,6 +283,7 @@ let
         δ_sat_values = calculate_sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
         δ_neg_values = calculate_sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
         σ_zweig_values = calculate_sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
+        fluid_CP_β = fluid_CP_β,
         inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β),
     )
 end

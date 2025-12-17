@@ -2,6 +2,10 @@
 Default constants
 ================#
 
+const ρ_water = 1e3  # kg/m^3
+const h_scala = 1e-3 # m
+const m_BM = 0.375   # kg / m^2
+
 const default_ctl_constants = CochleaTransmissionLineConstants(
     n = 1000,
     x_apex_value = 0.035,
@@ -21,7 +25,7 @@ const default_ctl_constants = CochleaTransmissionLineConstants(
     μ_α = 6,
     β = -10,
     μ_β = 5,
-    fluid_CP_β = 6.53e-3,
+    fluid_CP_κ = 2 * ρ_water / (h_scala * m_BM),
 )
 
 const default_u0_value = [1e-9, 0.0]

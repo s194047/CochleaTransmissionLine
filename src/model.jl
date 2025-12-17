@@ -86,7 +86,7 @@ end
     σ_zweig_values::Vector{Float64}
 
     # Nonlinearity scaling values
-    nonlinearity_scaling_values::Vector{Float64}
+    nonlin_scaling_values::Vector{Float64}
 
     # Scaled Fluid mass to Cochlear Partion mass ratio
     fluid_CP_β::Float64
@@ -174,11 +174,14 @@ const damping_impl(
     γ,
     δ_sat_values,
     δ_neg_values,
+    nonlin_scaling_values,
     sqrt_m_times_s_values,
 ) = let
         δ_sat = δ_sat_values[x_index+1];
         δ_neg = δ_neg_values[x_index+1];
-        δ = δ_sat - δ_neg;
+        nonlin_scaling = nonlin_scaling_values[x_index+1]
+        δ_neg_scaled = δ_neg * nonlin_scaling + δ_sat * (1 - nonlin_scaling)
+        δ = δ_sat - δ_neg_scaled;
         sqrt_m_times_s = sqrt_m_times_s_values[x_index+1];
 
         (
@@ -199,11 +202,14 @@ const feedback_stiffness_impl(
     μ_β,
     γ,
     σ_zweig_values,
+    nonlin_scaling_values,
 ) = let
         σ_zweig = σ_zweig_values[x_index+1];
+        nonlin_scaling = nonlin_scaling_values[x_index+1]
+        σ_zweig_scaled = nonlin_scaling * σ_zweig
 
-        (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
-        γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
+        (1 - γ) * σ_zweig_scaled * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
+        γ       * σ_zweig_scaled * ( 1 / (1 + exp((v_db - β) / μ_β)) )
 end
 
 #=======================================
@@ -246,7 +252,7 @@ The CP behaviour should approach a linear model towards the base and apex. This 
 This implementation is a modified implementation of the Tukey window:
 https://docs.juliadsp.org/stable/windows/#DSP.Windows.tukey
 """
-function calculate_nonlinearity_scaling(n::Int64, α::Float64) :: Vector{Float64}
+function calculate_nonlin_scaling(n::Int64, α::Float64) :: Vector{Float64}
     # check that α is reasonable
     !(0 <= α <= 1) && throw(DomainError(α, "α must be in the range [0, 1]."))
 
@@ -320,7 +326,7 @@ let
         δ_sat_values = calculate_sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
         δ_neg_values = calculate_sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
         σ_zweig_values = calculate_sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
-        nonlinearity_scaling_values = calculate_nonlinearity_scaling(length(x_indices), nonlin_scaling_taper),
+        nonlin_scaling_values = calculate_nonlin_scaling(length(x_indices), nonlin_scaling_taper),
         fluid_CP_β = fluid_CP_β,
         inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β),
     )
@@ -344,6 +350,7 @@ let
         δ_sat_values,
         δ_neg_values,
         σ_zweig_values,
+        nonlin_scaling_values,
         sqrt_m_times_s_values,
     ) = ctl_params;
 
@@ -357,6 +364,7 @@ let
         γ = γ,
         δ_sat_values = δ_sat_values,
         δ_neg_values = δ_neg_values,
+        nonlin_scaling_values = nonlin_scaling_values,
         sqrt_m_times_s_values = sqrt_m_times_s_values,
     );
     c = (x_index, v_db) -> feedback_stiffness_impl(
@@ -368,6 +376,7 @@ let
         μ_β = μ_β,
         γ = γ,
         σ_zweig_values = σ_zweig_values,
+        nonlin_scaling_values = nonlin_scaling_values,
     );
 
     CochleaTransmissionLineFunctions(d = d, c = c)

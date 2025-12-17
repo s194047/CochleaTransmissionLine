@@ -20,6 +20,7 @@ const default_ctl_constants = CochleaTransmissionLineConstants(
     δ_neg_k = -0.17,
     σ_zweig_a = 0.1416,
     σ_zweig_k = -0.17,
+    nonlin_scaling_taper = 0.05,
     γ = 0.12,
     α = 40,
     μ_α = 6,

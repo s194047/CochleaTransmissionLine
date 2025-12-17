@@ -44,6 +44,9 @@ Define Parameter Types
     σ_zweig_a::Float64
     σ_zweig_k::Float64
 
+    # Nonlinearity scaling taper coefficient
+    nonlin_scaling_taper::Float64
+
     # Amplitude of plateau
     γ::Float64
 
@@ -81,6 +84,9 @@ end
     δ_sat_values::Vector{Float64}
     δ_neg_values::Vector{Float64}
     σ_zweig_values::Vector{Float64}
+
+    # Nonlinearity scaling values
+    nonlinearity_scaling_values::Vector{Float64}
 
     # Scaled Fluid mass to Cochlear Partion mass ratio
     fluid_CP_β::Float64
@@ -232,6 +238,36 @@ Calculates a scaling parameter for a sigmoid function which varies over the leng
 const calculate_sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
 
 """
+    Calculate Nonlinearity Scaling
+
+This vector defines the scaling of the nonlinearity parameters d and c in the model.
+The CP behaviour should approach a linear model towards the base and apex. This scaling makes sure that δ approaches δ_sat and σ_zweig approaches 0 at both ends of the transmission line.
+
+This implementation is a modified implementation of the Tukey window:
+https://docs.juliadsp.org/stable/windows/#DSP.Windows.tukey
+"""
+function calculate_nonlinearity_scaling(n::Int64, α::Float64) :: Vector{Float64}
+    # check that α is reasonable
+    !(0 <= α <= 1) && throw(DomainError(α, "α must be in the range [0, 1]."))
+
+    # if α is less than machine precision, call it zero and return the
+    # rectangular window for this length.  if we don't short circuit this
+    # here, it will blow up below.
+    abs(α) <= eps() && return DSP.Windows.rect(n)
+
+    DSP.Windows.makewindow(n, 0, false) do x
+        if x <= -(1-α)/2
+            cospi(1/α*(x+(1-α)/2))
+        elseif x <= (1-α)/2
+            1.0
+        else
+            cospi(1/α*(x-(1-α)/2))
+        end
+    end
+end
+
+# TODO: Z should be calculated as Z = -(1 + fluid_CP_β + helicotrema_mass_ratio)
+"""
     Calculate Inverse Coupling Matrix
 
 The transmission line is defined by a second-order spatial derivative (Laplacian operator ∇²), which is discretized into a spatial difference equation with a Laplacian matrix. The full matrix `M` in the difference equation is the Laplacian matrix subtracted with the fluid to CP mass  `β` along the diagonal.
@@ -265,6 +301,7 @@ let
         δ_sat_a, δ_sat_k,
         δ_neg_a, δ_neg_k,
         σ_zweig_a, σ_zweig_k,
+        nonlin_scaling_taper,
         fluid_CP_κ,
     ) = ctl_constants;
 
@@ -283,6 +320,7 @@ let
         δ_sat_values = calculate_sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
         δ_neg_values = calculate_sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
         σ_zweig_values = calculate_sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
+        nonlinearity_scaling_values = calculate_nonlinearity_scaling(length(x_indices), nonlin_scaling_taper),
         fluid_CP_β = fluid_CP_β,
         inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β),
     )

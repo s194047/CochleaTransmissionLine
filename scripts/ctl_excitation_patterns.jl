@@ -40,16 +40,20 @@ solution = solve(problem, algorithm, abstol=1e-10)
 
 sampling_freq = 1e5
 t_values = tspan[1] : 1/sampling_freq : tspan[2]
+t_end_values = tspan[2] - 0.100 : 1/sampling_freq : tspan[2]
 
 _, u = get_solution_samples(solution, t_values)
+_, u_end = get_solution_samples(solution, t_end_values)
 
 #@save "data/ctl_excitation_patterns.jld2" t_values u
 
 ## Calculate the max amplitude of each CP
 y = @view u[:, 1:2:end]
 v = @view u[:, 2:2:end]
+y_end = @view u_end[:, 1:2:end]
+v_end = @view u_end[:, 2:2:end]
 
-max_v_amplitudes = reshape(maximum(abs.(v), dims=1), ctl_constants.n + 1)
+max_v_amplitudes = reshape(maximum(abs.(v_end), dims=1), ctl_constants.n + 1)
 
 plot(0:ctl_constants.n,20 * log10.(max_v_amplitudes ./ 10^(-6)))
 

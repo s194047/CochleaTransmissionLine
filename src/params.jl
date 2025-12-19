@@ -29,7 +29,7 @@ const default_ctl_constants = CochleaTransmissionLineConstants(
     fluid_CP_κ = 2 * ρ_water / (h_scala * m_BM),
 )
 
-const default_u0_value = [1e-9, 0.0]
+const default_u0_value = [0.0, 0.0]
 
 # TODO: Implement a way to choose stimulus functions (e.g., sinusoidal, impulse, audio-file).
 const stimulus(t::Float64) :: Float64 = .1 * sin(2π * 1000 * t)

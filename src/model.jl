@@ -192,7 +192,7 @@ const damping_impl(
         (
             (1 - γ) * δ * ( 1 - 1 / (1 + exp((v_db - α) / μ_α)) ) +
             γ       * δ * ( 1 - 1 / (1 + exp((v_db - β) / μ_β)) ) +
-            δ_neg
+            δ_neg_scaled
         ) * sqrt_m_times_s
 end
 
@@ -211,10 +211,11 @@ const feedback_stiffness_impl(
 ) = let
         σ_zweig = σ_zweig_values[x_index+1];
         nonlin_scaling = nonlin_scaling_values[x_index+1]
-        σ_zweig_scaled = nonlin_scaling * σ_zweig
 
-        (1 - γ) * σ_zweig_scaled * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
-        γ       * σ_zweig_scaled * ( 1 / (1 + exp((v_db - β) / μ_β)) )
+        (
+            (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
+            γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
+        ) * nonlin_scaling
 end
 
 #=======================================

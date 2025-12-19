@@ -269,11 +269,11 @@ function calculate_nonlin_scaling(n::Int64, α::Float64) :: Vector{Float64}
 
     DSP.Windows.makewindow(n, 0, false) do x
         if x <= -(1-α)/2
-            cospi(1/α*(x+(1-α)/2))
+            sinpi((0.5 + x) / α)
         elseif x <= (1-α)/2
             1.0
         else
-            cospi(1/α*(x-(1-α)/2))
+            sinpi((0.5 - x) / α)
         end
     end
 end

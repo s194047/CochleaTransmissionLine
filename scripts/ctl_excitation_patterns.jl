@@ -36,7 +36,7 @@ problem = DDEProblem(
 
 algorithm = MethodOfSteps(Tsit5())
 
-solution = solve(problem, algorithm)
+solution = solve(problem, algorithm, abstol=1e-10)
 
 sampling_freq = 1e5
 t_values = tspan[2] - 0.100 : 1/sampling_freq : tspan[2]

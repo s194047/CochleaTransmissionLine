@@ -39,15 +39,23 @@ algorithm = MethodOfSteps(Tsit5())
 solution = solve(problem, algorithm, abstol=1e-10)
 
 sampling_freq = 1e5
-t_values = tspan[2] - 0.100 : 1/sampling_freq : tspan[2]
+t_values = tspan[1] : 1/sampling_freq : tspan[2]
 
 _, u = get_solution_samples(solution, t_values)
 
 #@save "data/ctl_excitation_patterns.jld2" t_values u
 
 ## Calculate the max amplitude of each CP
+y = @view u[:, 1:2:end]
 v = @view u[:, 2:2:end]
 
 max_v_amplitudes = reshape(maximum(abs.(v), dims=1), ctl_constants.n + 1)
 
 plot(0:ctl_constants.n,20 * log10.(max_v_amplitudes ./ 10^(-6)))
+
+let idx_values = 1:3;
+    heatmap(t_values, idx_values, v[:, idx_values]')
+end
+
+plot(t_values, y[:, 1:3], xlims=(0.100, 0.110))
+plot(t_values, y[:, end-10:end], xlims=(0.000, 0.200))

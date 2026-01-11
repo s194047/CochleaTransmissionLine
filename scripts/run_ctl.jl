@@ -3,6 +3,7 @@ using CochleaTransmissionLine
 using YAML
 using DelayDiffEq
 
+# TODO: Implement sine and wave options for stimulus. These require extra parameters.
 function zero_stimulus(t::Float64)::Float64
     0.0
 end

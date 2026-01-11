@@ -98,6 +98,7 @@ end
     ctl_constants::CochleaTransmissionLineConstants
     ctl_params::CochleaTransmissionLineParams
     ctl_functions::CochleaTransmissionLineFunctions
+    stimulus::Function
 end
 
 #====================================
@@ -117,7 +118,7 @@ function cochlea_transmission_line!(
     y, v = @views u[1:2:end], u[2:2:end]
 
     # Extract parameters
-    (; ctl_constants, ctl_params, ctl_functions) = solver_params
+    (; ctl_constants, ctl_params, ctl_functions, stimulus) = solver_params
     (; n, m, v_ref, fluid_CP_β) = ctl_constants
     (; x_norm_positions, τ_values, s_values, inv_M) = ctl_params
     (; d, c) = ctl_functions
@@ -331,6 +332,7 @@ end
 
 const makeCochleaSolverInputParams(
     ctl_constants::CochleaTransmissionLineConstants,
+    stimulus::Function,
 ) :: CochleaSolverInputParams =
 let
     ctl_params = makeCochleaTransmissionLineParams(ctl_constants);
@@ -338,5 +340,6 @@ let
         ctl_constants = ctl_constants,
         ctl_params = ctl_params,
         ctl_functions = makeCochleaTransmissionLineFunctions(ctl_constants, ctl_params),
+        stimulus = stimulus,
     )
 end

@@ -50,14 +50,14 @@ function main()
     config_filename = ARGS[1]
 
     ctl_constants, u0_value, stimulus = load_paramters(config_filename)
-    solver_params = makeCochleaSolverInputParams(
+    solver_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,
     )
 
     u0 = repeat(u0_value, outer=ctl_constants.n+1)
     u0_history(
-        ::CochleaSolverInputParams,
+        ::CochleaModelParams,
         ::Float64,
         ;
         idxs=nothing,

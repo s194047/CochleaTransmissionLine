@@ -93,7 +93,7 @@ end
     c::Function
 end
 
-@kwdef struct CochleaSolverInputParams
+@kwdef struct CochleaModelParams
     ctl_constants::CochleaTransmissionLineConstants
     ctl_params::CochleaTransmissionLineParams
     ctl_functions::CochleaTransmissionLineFunctions
@@ -304,21 +304,21 @@ const makeCochleaTransmissionLineFunctions(
         CochleaTransmissionLineFunctions(d = d, c = c)
     end
 
-const makeCochleaSolverInputParams(
+const makeCochleaModelParams(
     ctl_constants::CochleaTransmissionLineConstants,
-) :: CochleaSolverInputParams =
+) :: CochleaModelParams =
     let
         ctl_params = makeCochleaTransmissionLineParams(ctl_constants);
-        CochleaSolverInputParams(
+        CochleaModelParams(
             ctl_constants = ctl_constants,
             ctl_params = ctl_params,
             ctl_functions = makeCochleaTransmissionLineFunctions(ctl_constants, ctl_params),
         )
     end
 
-const cochlea_solver_input_params = makeCochleaSolverInputParams(ctl_constants)
+const cochlea_solver_input_params = makeCochleaModelParams(ctl_constants)
 
-function run(cochlea_solver_input_params::CochleaSolverInputParams)
+function run(cochlea_solver_input_params::CochleaModelParams)
     let
         ctl_constants = cochlea_solver_input_params.ctl_constants;
         ctl_params = cochlea_solver_input_params.ctl_params;

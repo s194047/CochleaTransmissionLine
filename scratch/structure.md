@@ -4,8 +4,8 @@ Several modules
 ## Model
 This module contains:
 * `function cochlea_transmission_line!(...)`
-* All structs necessary for building `CochleaSolverInputParams`
-    * make function for `CochleaSolverInputParams` should also take stimulus function.
+* All structs necessary for building `CochleaModelParams`
+    * make function for `CochleaModelParams` should also take stimulus function.
     * Entire hierarchy
 * `d_impl` and `c_impl` (find better names)
 
@@ -19,13 +19,13 @@ It should import `Model` and then define and export:
 ## Main
 This ties it all together
 * Import the above modules
-* Make an instance of `CochleaSolverInputParams` from the values in the `Params` module
+* Make an instance of `CochleaModelParams` from the values in the `Params` module
 * Run the solver
 * Save the result
 
 You could refactor some of this into a solver module that does the hard work. Example what a `Solver` module could do:
 * Export one `solve` function that takes as parameters:
-  * `CochleaSolverInputParams` (everything that the solver callback function needs)
+  * `CochleaModelParams` (everything that the solver callback function needs)
   * Initial conditions
   * Time span of simulation (2 secs)
   * Slot size (100 ms between save)

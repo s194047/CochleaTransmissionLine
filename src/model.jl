@@ -94,7 +94,7 @@ end
     c::Function
 end
 
-@kwdef struct CochleaSolverInputParams
+@kwdef struct CochleaModelParams
     ctl_constants::CochleaTransmissionLineConstants
     ctl_params::CochleaTransmissionLineParams
     ctl_functions::CochleaTransmissionLineFunctions
@@ -109,7 +109,7 @@ function cochlea_transmission_line!(
     du::Vector{Float64},
     u::Vector{Float64},
     u_history, # History function
-    solver_params::CochleaSolverInputParams,
+    solver_params::CochleaModelParams,
     t::Float64,
 )
     # Define views for state and derivative of the
@@ -330,13 +330,13 @@ let
     CochleaTransmissionLineFunctions(d = d, c = c)
 end
 
-const makeCochleaSolverInputParams(
+const makeCochleaModelParams(
     ctl_constants::CochleaTransmissionLineConstants,
     stimulus::Function,
-) :: CochleaSolverInputParams =
+) :: CochleaModelParams =
 let
     ctl_params = makeCochleaTransmissionLineParams(ctl_constants);
-    CochleaSolverInputParams(
+    CochleaModelParams(
         ctl_constants = ctl_constants,
         ctl_params = ctl_params,
         ctl_functions = makeCochleaTransmissionLineFunctions(ctl_constants, ctl_params),

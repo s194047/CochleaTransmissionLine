@@ -43,7 +43,7 @@ function main()
 
     # Check that a file name was provided
     if length(ARGS) < 1
-        println("Pass parameter TOML file as first argument.")
+        println("Pass parameter YAML file as first argument.")
         exit(1)
     end
 

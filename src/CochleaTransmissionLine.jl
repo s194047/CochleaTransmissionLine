@@ -1,9 +1,9 @@
 module CochleaTransmissionLine
 
-include("params.jl")
-export CochleaTransmissionLineParam
-
-include("models.jl")
+include("model.jl")
+export CochleaTransmissionLineConstants
+export CochleaModelParams
+export makeCochleaModelParams
 export cochlea_transmission_line!
 
 include("data_analysis.jl")

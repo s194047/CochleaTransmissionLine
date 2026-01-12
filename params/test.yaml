@@ -1,0 +1,31 @@
+model_params:
+  transmission_line:
+    n: 1000
+    x_apex_value: 0.035
+    m: 0.375
+    A: 20832
+    λ: 60
+    κ: 145.5
+    v_ref: 1e-6
+    δ_sat_a: 0.2
+    δ_sat_k: 0.52
+    δ_neg_a: -0.12
+    δ_neg_k: -0.17
+    σ_zweig_a: 0.1416
+    σ_zweig_k: -0.17
+    γ: 0.12
+    α: 40
+    μ_α: 6
+    β: -10
+    μ_β: 5
+    fluid_CP_β: 6.53e-3
+
+  stimulus: "zero"
+
+solver_params:
+  u0_value: [1e-9, 0.0]
+
+  tspan: [0.0, 1.000]
+  # Enter the sample rate to use when sampling the solution (saveat).
+  # Leave out if the solution should not be sampled when solving.
+  saveat: 1e5

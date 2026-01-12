@@ -50,7 +50,7 @@ function main()
     config_filename = ARGS[1]
 
     ctl_constants, u0_value, stimulus = load_paramters(config_filename)
-    solver_params = makeCochleaModelParams(
+    model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,
     )
@@ -75,7 +75,7 @@ function main()
         u0,
         u0_history,
         tspan,
-        solver_params,
+        model_params,
     )
 
     algorithm = MethodOfSteps(Tsit5())

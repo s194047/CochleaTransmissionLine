@@ -33,3 +33,5 @@ solver_params:
 
 data:
   data_filename: "data/test.jld2"
+
+# TODO: Add more descriptions to make this a proper example file.

@@ -2,6 +2,11 @@ using CochleaTransmissionLine
 
 using YAML
 using DelayDiffEq
+using JLD2
+using DataInterpolations
+
+# TODO: Consider once more to save and load the solution
+#       rather than t and u with interpolations for better accuracy.
 
 # TODO: Implement sine and audio options for stimulus. These require extra parameters.
 #       YAML could be:
@@ -26,9 +31,10 @@ function load_stimulus(stimulus_type::String)
 end
 
 @kwdef struct SolverParams
-    u0_value::Vector{Float64}
+    u0_value::Union{Vector{Float64}, Nothing}
+    previous_solution_filename::Union{String, Nothing}
     tspan::Vector{Float64}
-    saveat::Union{Float64, Vector{Float64}}
+    saveat::Union{Float64, Vector{Any}}
 end
 
 function load_paramters(config_filename::String)
@@ -37,6 +43,7 @@ function load_paramters(config_filename::String)
     # Extract sections of config file.
     model_params_section = cfg["model_params"]
     solver_params_section = cfg["solver_params"]
+    data_section = cfg["data"]
 
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
@@ -48,8 +55,11 @@ function load_paramters(config_filename::String)
     stimulus = load_stimulus(model_params_section["stimulus"])
 
     solver_params = SolverParams(
-        # Read initial state.
-        u0_value = solver_params_section["u0_value"],
+        # Read initial state if given.
+        u0_value = get(solver_params_section, "u0_value", nothing),
+
+        # Read previous solution if given.
+        previous_solution_filename = get(solver_params_section, "previous_solution_filename", nothing),
 
         # Read the time span of simulation.
         tspan = solver_params_section["tspan"],
@@ -58,38 +68,70 @@ function load_paramters(config_filename::String)
         saveat = get(solver_params_section, "saveat", []),
     )
 
-    (ctl_constants, stimulus, solver_params)
+    # Read data filename for saving results.
+    data_filename = data_section["data_filename"]
+
+    (ctl_constants, stimulus, solver_params, data_filename)
 end
 
 function main()
-
-    # Check that a file name was provided
+    # Read config filename from command line arguments.
     if length(ARGS) < 1
         println("Pass parameter YAML file as first argument.")
         exit(1)
     end
-
     config_filename = ARGS[1]
 
-    ctl_constants, stimulus, solver_params = load_paramters(config_filename)
+    # Load parameters from config file.
+    ctl_constants, stimulus, solver_params, data_filename = load_paramters(config_filename)
     model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,
     )
 
-    u0 = repeat(solver_params.u0_value, outer=ctl_constants.n+1)
-    u0_history(
-        ::CochleaModelParams,
-        ::Float64,
-        ;
-        idxs=nothing,
-    ) =
-        if idxs == nothing
-            u0
-        else
-            u0[idxs]
+    # Define the initial state and history function.
+    # Ensure that either u0_value or previous_solution_filename is provided.
+    if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
+        println("Pass either u0 value or previous solution filename.")
+        exit(1)
+    end
+    if !isnothing(solver_params.u0_value)
+        println("u0 value specified: $(solver_params.u0_value)")
+        println("Setting all CP initial conditions and histories to this value.")
+        u0 = repeat(solver_params.u0_value, outer=ctl_constants.n+1)
+        u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
+            if isnothing(idxs)
+                u0
+            else
+                u0[idxs]
+            end
+    else
+        println("No u0 value specified. Loading previous solution from $(solver_params.previous_solution_filename).")
+        if !isfile(solver_params.previous_solution_filename)
+            println("Previous solution file not found: $(solver_params.previous_solution_filename)")
+            exit(1)
         end
+        previous_t, previous_u = load(solver_params.previous_solution_filename, "t", "u")
+        println("Setting u0 to the last state in the previous solution.")
+        u0 = previous_u[end]
+        u0_history = let
+            println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")
+            println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
+            t_offset = solver_params.tspan[1] - previous_t[end]
+            println("Shifting previous solution by $t_offset seconds to align with the current simulation.")
+            previous_t_shifted = previous_t .+ t_offset
+            interpolator = CubicSpline(previous_u, previous_t_shifted)
+            println("Defining history function using interpolation of the previous solution.")
+            (::CochleaModelParams, t::Float64; idxs=nothing) ->
+                if isnothing(idxs)
+                    interpolator(t)
+                else
+                    interpolator(t)[idxs]
+                end
+        end
+    end
 
+    # Define the DDE problem.
     problem = DDEProblem(
         cochlea_transmission_line!,
         u0,
@@ -98,16 +140,22 @@ function main()
         model_params,
     )
 
+    # Choose the solver algorithm.
     algorithm = MethodOfSteps(Tsit5())
 
+    # Run the simulation and log the time taken.
+    println("Starting simulation...")
     simulation_time = @elapsed solution = solve(problem, saveat=solver_params.saveat, algorithm)
-    @show simulation_time
+    println("Simulation completed in $(simulation_time) seconds.")
 
-    # TODO: Figure out how to save the solution. Use the method sketched in
-    #       scratch/serialize.jl
+    # Save the solution to disk.
+    println("Saving solution to $data_filename...")
+    mkpath(dirname(data_filename))
+    jldsave("$data_filename"; solution.t, solution.u)
+    println("Solution saved successfully.")
 end
 
-# Only run if script is executed directly
+# Only run if script is executed directly.
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
 end

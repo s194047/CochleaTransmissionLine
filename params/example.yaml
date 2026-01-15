@@ -20,7 +20,16 @@ model_params:
     μ_β: 5
     fluid_CP_β: 6.53e-3
 
-  stimulus: "zero"
+  stimulus:
+    #type: "zero"
+
+    #type: "sine"
+    #frequency: 1e3
+    #amplitude: 1e-9
+
+    type: "audio"
+    filename: "audio/test.wav"
+    gain: 1.0
 
 solver_params:
   previous_solution_filename: "data/test.jld2"

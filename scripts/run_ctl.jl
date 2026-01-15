@@ -9,17 +9,9 @@ using WAV
 # TODO: Consider once more to save and load the solution
 #       rather than t and u with interpolations for better accuracy.
 
-# TODO: Implement sine and audio options for stimulus. These require extra parameters.
-#       YAML could be:
-#         stimulus:
-#             type: "zero"
-#         stimulus:
-#             type: "sine"
-#             frequency: 15000
-#             phase: ??
-#         stimulus:
-#             type: "audio"
-#             filename: "tinnitus.wav"
+# TODO: Test that sinusoidal and audio stimuli work as intended.
+
+# TODO: Consider splitting up model parameters and run-specific parameters into different YAML files.
 
 function load_stimulus(stimulus::Dict)
     if stimulus["type"] == "zero"

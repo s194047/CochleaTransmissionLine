@@ -113,6 +113,11 @@ end
 Differential Equation for the Problem
 ====================================#
 
+# FIXME: The first element should actually be considered the middle ear.
+#        The distance between element 0 and 1 is Δx₀ which is different from Δx.
+#        These things should somehow be taken into account to have the correct
+#        boundary conditions and stimulus.
+
 function cochlea_transmission_line!(
     du::Vector{Float64},
     u::Vector{Float64},

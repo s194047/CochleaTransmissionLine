@@ -213,8 +213,8 @@ const feedback_stiffness_impl(
         nonlin_scaling = nonlin_scaling_values[x_index+1]
 
         (
-        (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
-        γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
+            (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
+            γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
         ) * nonlin_scaling
 end
 

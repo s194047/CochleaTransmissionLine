@@ -4,30 +4,44 @@ using YAML
 using DelayDiffEq
 using JLD2
 using DataInterpolations
+using WAV
 
 # TODO: Consider once more to save and load the solution
 #       rather than t and u with interpolations for better accuracy.
 
-# TODO: Implement sine and audio options for stimulus. These require extra parameters.
-#       YAML could be:
-#         stimulus:
-#             type: "zero"
-#         stimulus:
-#             type: "sine"
-#             frequency: 15000
-#             phase: ??
-#         stimulus:
-#             type: "audio"
-#             filename: "tinnitus.wav"
-function zero_stimulus(t::Float64)::Float64
-    0.0
-end
+# TODO: Test that sinusoidal and audio stimuli work as intended.
 
-const stimulus_functions = Dict{String, Function}(
-    "zero" => zero_stimulus
-)
-function load_stimulus(stimulus_type::String)
-    stimulus_functions[stimulus_type]
+# TODO: Consider splitting up model parameters and run-specific parameters into different YAML files.
+
+function load_stimulus(stimulus::Dict)
+    if stimulus["type"] == "zero"
+        println("No stimulus")
+        (::Float64) -> 0.0
+    elseif stimulus["type"] == "sine"
+        frequency = stimulus["frequency"]
+        amplitude = stimulus["amplitude"]
+        println("Sinusoidal stimulus with frequency: $frequency and amplitude: $amplitude")
+        (t::Float64) -> amplitude * sin(2π * frequency * t)
+    elseif stimulus["type"] == "audio"
+        filename = stimulus["filename"]
+        gain = get(stimulus, "gain", 1.0)
+        println("Loading stimulus from audio file: $filename")
+        y, fs = wavread(filename)
+        n_channels = size(y, 2)
+        if n_channels > 1
+            println("Audio file is stereo with $n_channels channels. Taking first channel only.")
+        end
+        y = y[:, 1] # Make sure y is a vector (take first channel if stereo)
+        y .= gain .* y
+        println("Applied gain of $gain to audio signal.")
+        duration = length(y) / fs
+        println("Audio file sample rate: $fs Hz, duration: $duration seconds")
+        t_audio = LinRange(0, duration, length(y))
+        interpolator = CubicSpline(y[:, 1], t_audio)
+        (t::Float64) -> interpolator(t)
+    else
+        error("Unknown stimulus type: $(stimulus["type"])")
+    end
 end
 
 @kwdef struct SolverParams
@@ -83,6 +97,7 @@ function main()
     config_filename = ARGS[1]
 
     # Load parameters from config file.
+    println("Loading parameters from config file: $config_filename")
     ctl_constants, stimulus, solver_params, data_filename = load_paramters(config_filename)
     model_params = makeCochleaModelParams(
         ctl_constants,

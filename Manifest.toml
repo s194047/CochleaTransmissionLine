@@ -2,7 +2,7 @@
 
 julia_version = "1.12.4"
 manifest_format = "2.0"
-project_hash = "c2e2fb53ffc43c7f3e066ad6fbd330f36f1b4f2b"
+project_hash = "bcc82a43b91f65e89629c0252a957eb011cd777e"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -192,7 +192,7 @@ uuid = "fb6a15b2-703c-40df-9091-08a04967cfa9"
 version = "0.1.13"
 
 [[deps.CochleaTransmissionLine]]
-deps = ["DSP", "DelayDiffEq", "JLD2", "LinearAlgebra", "OrdinaryDiffEq", "Plots", "SciMLBase"]
+deps = ["DSP", "DelayDiffEq", "JLD2", "LinearAlgebra", "OrdinaryDiffEq", "Plots", "SciMLBase", "YAML"]
 path = "."
 uuid = "6a8b58e3-ca38-4c91-9f06-924036e66dc7"
 version = "0.1.0"
@@ -2142,6 +2142,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Wayland_jll", "Xorg_libX11_jll", "
 git-tree-sha1 = "2f0486047a07670caad3a81a075d2e518acc5c59"
 uuid = "a44049a8-05dd-5a78-86c9-5fde0876e88c"
 version = "1.3.243+0"
+
+[[deps.WAV]]
+deps = ["Base64", "FileIO", "Libdl", "Logging"]
+git-tree-sha1 = "7e7e1b4686995aaf4ecaaf52f6cd824fa6bd6aa5"
+uuid = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
+version = "1.2.0"
 
 [[deps.Wayland_jll]]
 deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll"]

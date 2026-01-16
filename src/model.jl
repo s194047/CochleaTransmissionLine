@@ -128,7 +128,7 @@ function cochlea_transmission_line!(
     # Extract parameters
     (; ctl_constants, ctl_params, ctl_functions, stimulus) = solver_params
     (; n, m, v_ref) = ctl_constants
-    (; x_norm_positions, τ_values, s_values, fluid_CP_β, inv_M) = ctl_params
+    (; τ_values, s_values, fluid_CP_β, inv_M) = ctl_params
     (; d, c) = ctl_functions
 
     # Wrap history function and evaluate delayed values of y

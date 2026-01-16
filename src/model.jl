@@ -317,7 +317,7 @@ let
     x_positions = x_norm_positions * x_apex_value;
     f_values = calculate_frequencies(x_positions = x_positions, A = A, λ = λ, κ = κ);
     s_values = m * 4π^2 * f_values .^ 2;
-Δx = x_apex_value / n
+    Δx = x_apex_value / n
     fluid_CP_β = Δx^2 * fluid_CP_κ
     CochleaTransmissionLineParams(
         x_norm_positions = x_norm_positions,

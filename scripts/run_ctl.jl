@@ -129,6 +129,7 @@ function main()
             else
                 u0[idxs]
             end
+        println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
     else
         println("No u0 value specified. Loading previous solution from $(solver_params.previous_solution_filename).")
         if !isfile(solver_params.previous_solution_filename)

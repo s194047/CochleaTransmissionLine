@@ -36,7 +36,7 @@ function load_stimulus(stimulus::Dict)
         println("Applied gain of $gain to audio signal.")
         duration = length(y) / fs
         println("Audio file sample rate: $fs Hz, duration: $duration seconds")
-        t_audio = LinRange(0, duration, length(y))
+        t_audio = LinRange(0, duration - 1/fs, length(y))
         interpolator = CubicSpline(y[:, 1], t_audio)
         (t::Float64) -> interpolator(t)
     else

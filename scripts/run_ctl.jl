@@ -54,19 +54,28 @@ end
 function load_paramters(config_filename::String)
     cfg = YAML.load_file(config_filename)
 
+    # Load model constants from separate file
+    if !haskey(cfg, "model_constants_filename")
+        println("Error: model_constants_filename must be specified in the config file.")
+        exit(1)
+    end
+    model_constants_path = cfg["model_constants_filename"]
+    println("Loading model constants from: $model_constants_path")
+    ctl_constants_dict = YAML.load_file(model_constants_path)
+
     # Extract sections of config file.
-    model_params_section = cfg["model_params"]
+    stimulus_section = cfg["stimulus"]
     solver_params_section = cfg["solver_params"]
     data_section = cfg["data"]
 
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
         ;
-        (Pair(Symbol(k), v) for (k, v) in model_params_section["transmission_line"])...
+        (Pair(Symbol(k), v) for (k, v) in ctl_constants_dict)...
     )
 
     # Read the stimulus function type.
-    stimulus = load_stimulus(model_params_section["stimulus"])
+    stimulus = load_stimulus(stimulus_section)
 
     solver_params = SolverParams(
         # Read initial state if given.

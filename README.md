@@ -10,3 +10,8 @@ See `params/test.yaml` for an example configuration file.
 ```sh
 julia --project=. scripts/run_ctl.jl params/example.yaml
 ```
+
+## To be implemented / investigated
+- Add windowing / ramping of onset of stimulus to avoid artefacts.
+- Generate initial conditions (with no stimulus for 1000 ms) once and use it in all simulation runs.
+- Decide whether it's possible to serialize a callable `ODESolution` object.

@@ -6,7 +6,7 @@ stimulus:
   amplitude: 10
 
 solver_params:
-  u0_value: [1e-9, 0.0]
+  previous_solution_filename: "data/initial_conditions.jld2"
 
   tspan: [0.0, 0.500]
 

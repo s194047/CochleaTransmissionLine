@@ -137,7 +137,7 @@ function main()
             exit(1)
         end
         previous_t, previous_u = load(solver_params.previous_solution_filename, "t", "u")
-        println("Setting u0 to the last state in the previous solution.")
+        println("Setting all CP initial conditions to the last state in the previous solution.")
         u0 = previous_u[end]
         u0_history = let
             println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")

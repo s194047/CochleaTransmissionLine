@@ -124,11 +124,11 @@ function main()
         println("Setting all CP initial conditions and histories to this value.")
         u0 = repeat(solver_params.u0_value, outer=ctl_constants.n+1)
         u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
-            if isnothing(idxs)
-                u0
-            else
-                u0[idxs]
-            end
+        if isnothing(idxs)
+            u0
+        else
+            u0[idxs]
+        end
         println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
     else
         println("No u0 value specified. Loading previous solution from $(solver_params.previous_solution_filename).")

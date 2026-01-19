@@ -9,8 +9,6 @@ using WAV
 # TODO: Consider once more to save and load the solution
 #       rather than t and u with interpolations for better accuracy.
 
-# TODO: Test that sinusoidal and audio stimuli work as intended.
-
 function load_stimulus(stimulus::Dict)
     if stimulus["type"] == "zero"
         println("No stimulus")

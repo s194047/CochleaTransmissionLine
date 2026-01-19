@@ -12,7 +12,7 @@ stimulus:
   gain: 1.0
 
 solver_params:
-  previous_solution_filename: "data/test.jld2"
+  previous_solution_filename: "data/initial_conditions.jld2"
   #u0_value: [1e-9, 0.0]
 
   tspan: [0.0, 0.100]
@@ -21,6 +21,6 @@ solver_params:
   #saveat: 1e-5
 
 data:
-  data_filename: "data/test.jld2"
+  data_filename: "data/example.jld2"
 
 # TODO: Add more descriptions to make this a proper example file.

@@ -1,0 +1,14 @@
+# Parameters for generating initial conditions to be used in
+# subsequent simulations.
+
+model_constants_filename: "model_constants.yaml"
+
+stimulus:
+  type: "zero"
+
+solver_params:
+  u0_value: [1e-9, 0.0]
+  tspan: [0.0, 1.000]
+
+data:
+  data_filename: "data/initial_conditions.jld2"

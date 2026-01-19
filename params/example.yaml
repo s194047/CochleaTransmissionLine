@@ -21,6 +21,6 @@ solver_params:
   #saveat: 1e-5
 
 data:
-  data_filename: "data/test.jld2"
+  data_filename: "data/example.jld2"
 
 # TODO: Add more descriptions to make this a proper example file.

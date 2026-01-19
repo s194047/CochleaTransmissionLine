@@ -1,30 +1,9 @@
-model_params:
-  transmission_line:
-    n: 1000
-    x_apex_value: 0.035
-    m: 0.375
-    A: 20832
-    λ: 60
-    κ: 145.5
-    v_ref: 1e-6
-    δ_sat_a: 0.2
-    δ_sat_k: 0.52
-    δ_neg_a: -0.12
-    δ_neg_k: -0.17
-    σ_zweig_a: 0.1416
-    σ_zweig_k: -0.17
-    nonlin_scaling_taper: 0.5
-    γ: 0.12
-    α: 40
-    μ_α: 6
-    β: -10
-    μ_β: 5
-    fluid_CP_κ: 5.333333333333333e6
+model_constants_filename: "model_constants.yaml"
 
-  stimulus:
-    type: "sine"
-    frequency: 1e3
-    amplitude: 10
+stimulus:
+  type: "sine"
+  frequency: 1e3
+  amplitude: 10
 
 solver_params:
   u0_value: [1e-9, 0.0]

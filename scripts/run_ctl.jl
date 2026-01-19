@@ -11,8 +11,6 @@ using WAV
 
 # TODO: Test that sinusoidal and audio stimuli work as intended.
 
-# TODO: Consider splitting up model parameters and run-specific parameters into different YAML files.
-
 function load_stimulus(stimulus::Dict)
     if stimulus["type"] == "zero"
         println("No stimulus")

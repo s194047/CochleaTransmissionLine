@@ -13,12 +13,13 @@ model_params:
     δ_neg_k: -0.17
     σ_zweig_a: 0.1416
     σ_zweig_k: -0.17
+    nonlin_scaling_taper: 0.5
     γ: 0.12
     α: 40
     μ_α: 6
     β: -10
     μ_β: 5
-    fluid_CP_β: 6.53e-3
+    fluid_CP_κ: 5.333333333333333e6
 
   stimulus: "zero"
 

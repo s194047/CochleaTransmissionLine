@@ -44,6 +44,9 @@ Define Parameter Types
     σ_zweig_a::Float64
     σ_zweig_k::Float64
 
+    # Nonlinearity scaling taper coefficient
+    nonlin_scaling_taper::Float64
+
     # Amplitude of plateau
     γ::Float64
 
@@ -59,11 +62,10 @@ Define Parameter Types
     # Slope at lower turning point
     μ_β::Float64
 
-    # FIXME: β is actually the mass ratio scaled by the spatial discretization step: β = Δx² * κ
-    #        κ should be given as a constant or calculated from ρ, m and h as: κ = 2ρ / (m * h).
-    #        Δx should be calculated as: Δx = x_apex_value / n
-    # Fluid mass to CP mass ratio
-    fluid_CP_β::Float64
+    # TODO: Consider giving ρ, m and h rather than κ and calculate κ = κ = 2ρ / (m * h).
+    #       Δx should be calculated as: Δx = x_apex_value / n
+    # Fluid mass to Cochlear Partion mass ratio
+    fluid_CP_κ::Float64
 end
 
 @kwdef struct CochleaTransmissionLineParams
@@ -81,6 +83,12 @@ end
     δ_sat_values::Vector{Float64}
     δ_neg_values::Vector{Float64}
     σ_zweig_values::Vector{Float64}
+
+    # Nonlinearity scaling values
+    nonlin_scaling_values::Vector{Float64}
+
+    # Scaled Fluid mass to Cochlear Partion mass ratio
+    fluid_CP_β::Float64
 
     # Inverse coupling matrix
     inv_M::Matrix{Float64}
@@ -105,6 +113,11 @@ end
 Differential Equation for the Problem
 ====================================#
 
+# FIXME: The first element should actually be considered the middle ear.
+#        The distance between element 0 and 1 is Δx₀ which is different from Δx.
+#        These things should somehow be taken into account to have the correct
+#        boundary conditions and stimulus.
+
 function cochlea_transmission_line!(
     du::Vector{Float64},
     u::Vector{Float64},
@@ -119,8 +132,8 @@ function cochlea_transmission_line!(
 
     # Extract parameters
     (; ctl_constants, ctl_params, ctl_functions, stimulus) = solver_params
-    (; n, m, v_ref, fluid_CP_β) = ctl_constants
-    (; x_norm_positions, τ_values, s_values, inv_M) = ctl_params
+    (; n, m, v_ref) = ctl_constants
+    (; τ_values, s_values, fluid_CP_β, inv_M) = ctl_params
     (; d, c) = ctl_functions
 
     # Wrap history function and evaluate delayed values of y
@@ -166,17 +179,20 @@ const damping_impl(
     γ,
     δ_sat_values,
     δ_neg_values,
+    nonlin_scaling_values,
     sqrt_m_times_s_values,
 ) = let
         δ_sat = δ_sat_values[x_index+1];
         δ_neg = δ_neg_values[x_index+1];
-        δ = δ_sat - δ_neg;
+        nonlin_scaling = nonlin_scaling_values[x_index+1]
+        δ_neg_scaled = δ_neg * nonlin_scaling + δ_sat * (1 - nonlin_scaling)
+        δ = δ_sat - δ_neg_scaled;
         sqrt_m_times_s = sqrt_m_times_s_values[x_index+1];
 
         (
             (1 - γ) * δ * ( 1 - 1 / (1 + exp((v_db - α) / μ_α)) ) +
             γ       * δ * ( 1 - 1 / (1 + exp((v_db - β) / μ_β)) ) +
-            δ_neg
+            δ_neg_scaled
         ) * sqrt_m_times_s
 end
 
@@ -191,11 +207,15 @@ const feedback_stiffness_impl(
     μ_β,
     γ,
     σ_zweig_values,
+    nonlin_scaling_values,
 ) = let
         σ_zweig = σ_zweig_values[x_index+1];
+        nonlin_scaling = nonlin_scaling_values[x_index+1]
 
-        (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
-        γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
+        (
+            (1 - γ) * σ_zweig * ( 1 / (1 + exp((v_db - α) / μ_α)) ) +
+            γ       * σ_zweig * ( 1 / (1 + exp((v_db - β) / μ_β)) )
+        ) * nonlin_scaling
 end
 
 #=======================================
@@ -230,6 +250,36 @@ Calculates a scaling parameter for a sigmoid function which varies over the leng
 const calculate_sigmoid_scaling(x_norm::Float64, a::Float64, k::Float64) :: Float64 = a * 10^(k * x_norm)
 
 """
+    Calculate Nonlinearity Scaling
+
+This vector defines the scaling of the nonlinearity parameters d and c in the model.
+The CP behaviour should approach a linear model towards the base and apex. This scaling makes sure that δ approaches δ_sat and σ_zweig approaches 0 at both ends of the transmission line.
+
+This implementation is a modified implementation of the Tukey window:
+https://docs.juliadsp.org/stable/windows/#DSP.Windows.tukey
+"""
+function calculate_nonlin_scaling(n::Int64, α::Float64) :: Vector{Float64}
+    # check that α is reasonable
+    !(0 <= α <= 1) && throw(DomainError(α, "α must be in the range [0, 1]."))
+
+    # if α is less than machine precision, call it zero and return the
+    # rectangular window for this length.  if we don't short circuit this
+    # here, it will blow up below.
+    abs(α) <= eps() && return DSP.Windows.rect(n)
+
+    DSP.Windows.makewindow(n, 0, false) do x
+        if x <= -(1-α)/2
+            sinpi((0.5 + x) / α)
+        elseif x <= (1-α)/2
+            1.0
+        else
+            sinpi((0.5 - x) / α)
+        end
+    end
+end
+
+# TODO: Z should be calculated as Z = -(1 + fluid_CP_β + helicotrema_mass_ratio)
+"""
     Calculate Inverse Coupling Matrix
 
 The transmission line is defined by a second-order spatial derivative (Laplacian operator ∇²), which is discretized into a spatial difference equation with a Laplacian matrix. The full matrix `M` in the difference equation is the Laplacian matrix subtracted with the fluid to CP mass  `β` along the diagonal.
@@ -263,7 +313,8 @@ let
         δ_sat_a, δ_sat_k,
         δ_neg_a, δ_neg_k,
         σ_zweig_a, σ_zweig_k,
-        fluid_CP_β,
+        nonlin_scaling_taper,
+        fluid_CP_κ,
     ) = ctl_constants;
 
     x_indices = 0:n;
@@ -271,6 +322,8 @@ let
     x_positions = x_norm_positions * x_apex_value;
     f_values = calculate_frequencies(x_positions = x_positions, A = A, λ = λ, κ = κ);
     s_values = m * 4π^2 * f_values .^ 2;
+    Δx = x_apex_value / n
+    fluid_CP_β = Δx^2 * fluid_CP_κ
     CochleaTransmissionLineParams(
         x_norm_positions = x_norm_positions,
         τ_values = 1.742 ./ f_values,
@@ -279,6 +332,8 @@ let
         δ_sat_values = calculate_sigmoid_scaling.(x_norm_positions, δ_sat_a, δ_sat_k),
         δ_neg_values = calculate_sigmoid_scaling.(x_norm_positions, δ_neg_a, δ_neg_k),
         σ_zweig_values = calculate_sigmoid_scaling.(x_norm_positions, σ_zweig_a, σ_zweig_k),
+        nonlin_scaling_values = calculate_nonlin_scaling(length(x_indices), nonlin_scaling_taper),
+        fluid_CP_β = fluid_CP_β,
         inv_M = calculate_inverse_coupling_matrix(n, fluid_CP_β),
     )
 end
@@ -301,6 +356,7 @@ let
         δ_sat_values,
         δ_neg_values,
         σ_zweig_values,
+        nonlin_scaling_values,
         sqrt_m_times_s_values,
     ) = ctl_params;
 
@@ -314,6 +370,7 @@ let
         γ = γ,
         δ_sat_values = δ_sat_values,
         δ_neg_values = δ_neg_values,
+        nonlin_scaling_values = nonlin_scaling_values,
         sqrt_m_times_s_values = sqrt_m_times_s_values,
     );
     c = (x_index, v_db) -> feedback_stiffness_impl(
@@ -325,6 +382,7 @@ let
         μ_β = μ_β,
         γ = γ,
         σ_zweig_values = σ_zweig_values,
+        nonlin_scaling_values = nonlin_scaling_values,
     );
 
     CochleaTransmissionLineFunctions(d = d, c = c)

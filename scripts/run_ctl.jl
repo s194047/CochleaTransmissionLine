@@ -9,6 +9,21 @@ using WAV
 # TODO: Consider once more to save and load the solution
 #       rather than t and u with interpolations for better accuracy.
 
+"""
+    Calculate half cosine onset ramp-up function
+
+Make it possible to ramp up the amplitude of the stimulus to lower onset artifacts.
+"""
+function onset_ramp(t::Float64, rise_time::Float64)
+    if t < 0.0
+        return 0.0
+    elseif t >= rise_time
+        return 1.0
+    else
+        return 0.5 * (1.0 - cos(π * t / rise_time))
+    end
+end
+
 function load_stimulus(stimulus::Dict)
     if stimulus["type"] == "zero"
         println("No stimulus")
@@ -16,11 +31,19 @@ function load_stimulus(stimulus::Dict)
     elseif stimulus["type"] == "sine"
         frequency = stimulus["frequency"]
         amplitude = stimulus["amplitude"]
+        rise_time = get(stimulus, "rise_time", 0.0)
         println("Sinusoidal stimulus with frequency: $frequency and amplitude: $amplitude")
-        (t::Float64) -> amplitude * sin(2π * frequency * t)
+        if rise_time > 0.0
+            println("Applying rise time of $rise_time seconds")
+            (t::Float64) -> amplitude * onset_ramp(t, rise_time) * sin(2π * frequency * t)
+        else
+            println("No rise time applied")
+            (t::Float64) -> amplitude * sin(2π * frequency * t)
+        end
     elseif stimulus["type"] == "audio"
         filename = stimulus["filename"]
         gain = get(stimulus, "gain", 1.0)
+        rise_time = get(stimulus, "rise_time", 0.0)
         println("Loading stimulus from audio file: $filename")
         y, fs = wavread(filename)
         n_channels = size(y, 2)
@@ -34,7 +57,13 @@ function load_stimulus(stimulus::Dict)
         println("Audio file sample rate: $fs Hz, duration: $duration seconds")
         t_audio = LinRange(0, duration - 1/fs, length(y))
         interpolator = CubicSpline(y[:, 1], t_audio)
-        (t::Float64) -> interpolator(t)
+        if rise_time > 0.0
+            println("Applying rise time of $rise_time seconds")
+            (t::Float64) -> onset_ramp(t, rise_time) * interpolator(t)
+        else
+            println("No rise time applied")
+            (t::Float64) -> interpolator(t)
+        end
     else
         error("Unknown stimulus type: $(stimulus["type"])")
     end

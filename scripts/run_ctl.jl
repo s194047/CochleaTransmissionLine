@@ -76,22 +76,22 @@ end
     saveat::Union{Float64, Vector{Any}}
 end
 
-function load_paramters(config_filename::String)
-    cfg = YAML.load_file(config_filename)
+function load_paramters(parameters_filename::String)
+    parameters = YAML.load_file(parameters_filename)
 
     # Load model constants from separate file
-    if !haskey(cfg, "model_constants_filename")
+    if !haskey(parameters, "model_constants_filename")
         println("Error: model_constants_filename must be specified in the config file.")
         exit(1)
     end
-    model_constants_path = cfg["model_constants_filename"]
-    println("Loading model constants from: $model_constants_path")
-    ctl_constants_dict = YAML.load_file(model_constants_path)
+    model_constants_filename = parameters["model_constants_filename"]
+    println("Loading model constants from: $model_constants_filename")
+    ctl_constants_dict = YAML.load_file(model_constants_filename)
 
     # Extract sections of config file.
-    stimulus_section = cfg["stimulus"]
-    solver_params_section = cfg["solver_params"]
-    data_section = cfg["data"]
+    stimulus_section = parameters["stimulus"]
+    solver_params_section = parameters["solver_params"]
+    data_section = parameters["data"]
 
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
@@ -119,7 +119,14 @@ function load_paramters(config_filename::String)
     # Read data filename for saving results.
     data_filename = data_section["data_filename"]
 
-    (ctl_constants, stimulus, solver_params, data_filename)
+    metadata = Dict(
+        "parameters_filename" => parameters_filename,
+        "model_constants_filename" => model_constants_filename,
+        "stimulus" => stimulus_section,
+        "solver_params" => solver_params_section,
+    )
+
+    (ctl_constants, stimulus, solver_params, data_filename, metadata)
 end
 
 function main()
@@ -132,7 +139,7 @@ function main()
 
     # Load parameters from config file.
     println("Loading parameters from config file: $config_filename")
-    ctl_constants, stimulus, solver_params, data_filename = load_paramters(config_filename)
+    ctl_constants, stimulus, solver_params, data_filename, metadata = load_paramters(config_filename)
     model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,
@@ -201,7 +208,12 @@ function main()
     # Save the solution to disk.
     println("Saving solution to $data_filename...")
     mkpath(dirname(data_filename))
-    jldsave("$data_filename"; solution.t, solution.u)
+    jldsave(
+        "$data_filename";
+        solution.t,
+        solution.u,
+        metadata,
+    )
     println("Solution saved successfully.")
 end
 

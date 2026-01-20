@@ -19,3 +19,4 @@ julia --project=. scripts/run_ctl.jl params/example.yaml
 - Make recipes, julia scripts or shell scripts for the plots that I want to use in the report.
 - Decide whether it's possible to serialize a callable `ODESolution` object.
 - Look into a more flexible way to simulate long timespans by splitting up the original timespan into shorter chunks and solving sequentially (without saving and reloading solutions, just keeping them as variables).
+- Move `load_stimulus` and `load_parameters` functions from `scripts/run_ctl.jl` to `src/` as part of the module for better reusability across multiple run scripts.

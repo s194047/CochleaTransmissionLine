@@ -14,3 +14,4 @@ julia --project=. scripts/run_ctl.jl params/example.yaml
 ## To be implemented / investigated
 - Add windowing / ramping of onset of stimulus to avoid artefacts.
 - Decide whether it's possible to serialize a callable `ODESolution` object.
+- Look into a more flexible way to simulate long timespans by splitting up the original timespan into shorter chunks and solving sequentially (without saving and reloading solutions, just keeping them as variables).

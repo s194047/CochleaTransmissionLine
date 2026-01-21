@@ -12,10 +12,6 @@ julia --project=. scripts/run_ctl.jl params/example.yaml
 ```
 
 ## To be implemented / investigated
-- Save metadata in JLD2 files for better handling when analysing and plotting data. Consider saving:
-    - Model Constants Filename
-    - Stimulus
-    - Solver Params
 - Make recipes, julia scripts or shell scripts for the plots that I want to use in the report.
 - Decide whether it's possible to serialize a callable `ODESolution` object.
 - Look into a more flexible way to simulate long timespans by splitting up the original timespan into shorter chunks and solving sequentially (without saving and reloading solutions, just keeping them as variables).

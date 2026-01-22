@@ -10,4 +10,7 @@ include("data_analysis.jl")
 export get_solution_samples
 export instantaneous_rotation
 
+include("util.jl")
+export amplitude_from_filename
+
 end # module CochleaTransmissionLine

@@ -1,0 +1,15 @@
+model_constants_filename: "model_constants.yaml"
+
+stimulus:
+  type: "sine"
+  frequency: 1e3
+  amplitude: 3.1622776601683795e2
+  onset_ramp_time: 0.010
+
+solver_params:
+  previous_solution_filename: "data/initial_conditions.jld2"
+
+  tspan: [0.0, 0.500]
+
+data:
+  data_filename: "data/excitation_patterns/sine_f_1e3_a_3.1622776601683795e2_onset_ramp_time_0.010.jld2"

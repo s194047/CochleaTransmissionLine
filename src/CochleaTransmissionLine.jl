@@ -14,6 +14,6 @@ include("util.jl")
 export amplitude_from_filename
 export load_stimulus
 export SolverParams
-export load_paramters
+export load_parameters
 
 end # module CochleaTransmissionLine

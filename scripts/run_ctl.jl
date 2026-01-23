@@ -86,7 +86,7 @@ function load_paramters(parameters_filename::String)
     end
     model_constants_filename = parameters["model_constants_filename"]
     println("Loading model constants from: $model_constants_filename")
-    ctl_constants_dict = YAML.load_file(model_constants_filename)
+    model_constants_dict = YAML.load_file(model_constants_filename)
 
     # Extract sections of config file.
     stimulus_section = parameters["stimulus"]
@@ -96,7 +96,7 @@ function load_paramters(parameters_filename::String)
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
         ;
-        (Pair(Symbol(k), v) for (k, v) in ctl_constants_dict)...
+        (Pair(Symbol(k), v) for (k, v) in model_constants_dict)...
     )
 
     # Read the stimulus function type.
@@ -122,6 +122,7 @@ function load_paramters(parameters_filename::String)
     metadata = Dict(
         "parameters_filename" => parameters_filename,
         "model_constants_filename" => model_constants_filename,
+        "model_constants" => model_constants_dict,
         "stimulus" => stimulus_section,
         "solver_params" => solver_params_section,
     )

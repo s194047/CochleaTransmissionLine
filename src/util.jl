@@ -120,5 +120,11 @@ function load_parameters(parameters_filename::String)
         "solver_params" => solver_params_section,
     )
 
-    (ctl_constants, stimulus, solver_params, data_filename, metadata)
+    (
+        ctl_constants=ctl_constants,
+        stimulus=stimulus,
+        solver_params=solver_params,
+        data_filename=data_filename,
+        metadata=metadata,
+    )
 end

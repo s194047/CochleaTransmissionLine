@@ -5,6 +5,7 @@ authors = ["Sofus Dawids <s194047@dtu.dk>"]
 
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 DelayDiffEq = "bcd4f6db-9728-5f36-b5f7-82caef46ccdb"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -16,6 +17,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 DSP = "0.8.4"
+DataInterpolations = "8.9.0"
 DelayDiffEq = "5.62.0"
 JLD2 = "0.6.3"
 LinearAlgebra = "1.12.0"

@@ -1,5 +1,11 @@
+using YAML
+using WAV
+using DataInterpolations
+
 """
-    Calculate half cosine onset ramp-up function
+    onset_ramp(t, onset_ramp_time)
+
+Calculate half cosine onset ramp-up function.
 
 Make it possible to ramp up the amplitude of the stimulus to lower onset artifacts.
 """
@@ -13,6 +19,13 @@ function onset_ramp(t::Float64, onset_ramp_time::Float64)
     end
 end
 
+"""
+    load_stimulus(stimulus)
+
+Load a stimulus given a dictionary definition.
+
+Returns a function `stimulus(t::Float64) -> Float64`, where `t` is time in seconds.
+"""
 function load_stimulus(stimulus::Dict)
     if stimulus["type"] == "zero"
         println("No stimulus")
@@ -65,7 +78,19 @@ end
     saveat::Union{Float64, Vector{Any}}
 end
 
-function load_paramters(parameters_filename::String)
+"""
+    load_parameters(parameters_filename)
+
+Load parameters for running a simulation from a YAML file.
+
+Returns a named tuple with fields:
+- `ctl_constants`: constants for the cochlea transmission line model
+- `stimulus`: stimulus definition
+- `solver_params`: solver configuration
+- `data_filename`: output data file name
+- `metadata`: metadata that can be saved with a data file
+"""
+function load_parameters(parameters_filename::String)
     parameters = YAML.load_file(parameters_filename)
 
     # Load model constants from separate file
@@ -116,5 +141,11 @@ function load_paramters(parameters_filename::String)
         "solver_params" => solver_params_section,
     )
 
-    (ctl_constants, stimulus, solver_params, data_filename, metadata)
+    (
+        ctl_constants=ctl_constants,
+        stimulus=stimulus,
+        solver_params=solver_params,
+        data_filename=data_filename,
+        metadata=metadata,
+    )
 end

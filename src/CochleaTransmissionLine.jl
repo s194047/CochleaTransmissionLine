@@ -13,6 +13,6 @@ export instantaneous_rotation
 include("util.jl")
 export load_stimulus
 export SolverParams
-export load_paramters
+export load_parameters
 
 end # module CochleaTransmissionLine

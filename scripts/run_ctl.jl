@@ -19,7 +19,7 @@ function main()
 
     # Load parameters from config file.
     println("Loading parameters from config file: $config_filename")
-    ctl_constants, stimulus, solver_params, data_filename, metadata = load_paramters(config_filename)
+    ctl_constants, stimulus, solver_params, data_filename, metadata = load_parameters(config_filename)
     model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,

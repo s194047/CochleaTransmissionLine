@@ -65,7 +65,7 @@ end
     saveat::Union{Float64, Vector{Any}}
 end
 
-function load_paramters(parameters_filename::String)
+function load_parameters(parameters_filename::String)
     parameters = YAML.load_file(parameters_filename)
 
     # Load model constants from separate file

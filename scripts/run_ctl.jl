@@ -1,10 +1,8 @@
 using CochleaTransmissionLine
 
-using YAML
 using DelayDiffEq
 using JLD2
 using DataInterpolations
-using WAV
 
 # TODO: Consider once more to save and load the solution
 #       rather than t and u with interpolations for better accuracy.

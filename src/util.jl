@@ -1,3 +1,7 @@
+using YAML
+using WAV
+using DataInterpolations
+
 """
     Calculate half cosine onset ramp-up function
 

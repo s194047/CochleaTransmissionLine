@@ -1,0 +1,12 @@
+model_constants_filename: "model_constants_with_s_roughness.yaml"
+
+stimulus:
+  type: "zero"
+
+solver_params:
+  previous_solution_filename: "data/initial_conditions_with_s_roughness.jld2"
+
+  tspan: [0.0, 0.500]
+
+data:
+  data_filename: "data/spontaneous_activity.jld2"

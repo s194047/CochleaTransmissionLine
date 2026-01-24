@@ -1,5 +1,6 @@
 using DSP
 using LinearAlgebra
+using Random
 
 #=====================
 Define Parameter Types
@@ -66,6 +67,10 @@ Define Parameter Types
     #       Δx should be calculated as: Δx = x_apex_value / n
     # Fluid mass to Cochlear Partion mass ratio
     fluid_CP_κ::Float64
+
+    s_roughness_rng_seed::Int64 = nothing
+
+    s_roughness_scaling::Float64 = 0.0
 end
 
 @kwdef struct CochleaTransmissionLineParams
@@ -302,6 +307,23 @@ let
     inv(M)
 end
 
+const calculate_s_values(
+    m::Float64,
+    f_values::Vector{Float64},
+    s_roughness_rng_seed::Union{Int64, Nothing},
+    s_roughness_scaling::Float64
+) :: Vector{Float64} =
+let
+    s_smooth = m * 4π^2 * f_values .^ 2;
+    if s_roughness_scaling == 0.0
+        s_smooth
+    else
+        rng = Xoshiro(s_roughness_rng_seed)
+        s_roughness_scaling_values = max.(1 .+ randn(rng, length(s_smooth)) * s_roughness_scaling, eps(0.0))
+        s_smooth .* s_roughness_scaling_values
+    end
+end
+
 const makeCochleaTransmissionLineParams(ctl_constants::CochleaTransmissionLineConstants) :: CochleaTransmissionLineParams =
 let
     (
@@ -315,13 +337,14 @@ let
         σ_zweig_a, σ_zweig_k,
         nonlin_scaling_taper,
         fluid_CP_κ,
+        s_roughness_rng_seed, s_roughness_scaling,
     ) = ctl_constants;
 
     x_indices = 0:n;
     x_norm_positions = x_indices / n;
     x_positions = x_norm_positions * x_apex_value;
     f_values = calculate_frequencies(x_positions = x_positions, A = A, λ = λ, κ = κ);
-    s_values = m * 4π^2 * f_values .^ 2;
+    s_values = calculate_s_values(m, f_values, s_roughness_rng_seed, s_roughness_scaling);
     Δx = x_apex_value / n
     fluid_CP_β = Δx^2 * fluid_CP_κ
     CochleaTransmissionLineParams(

@@ -14,5 +14,6 @@ include("util.jl")
 export load_stimulus
 export SolverParams
 export load_parameters
+export make_initial_conditions
 
 end # module CochleaTransmissionLine

@@ -10,11 +10,11 @@ function main()
         println("Pass parameter YAML file as first argument.")
         exit(1)
     end
-    config_filename = ARGS[1]
+    parameters_filename = ARGS[1]
 
     # Load parameters from config file.
-    println("Loading parameters from config file: $config_filename")
-    (; ctl_constants, stimulus, solver_params, data_filename, metadata) = load_parameters(config_filename)
+    println("Loading parameters from config file: $parameters_filename")
+    (; ctl_constants, stimulus, solver_params, data_filename, metadata) = load_parameters(parameters_filename)
     model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,

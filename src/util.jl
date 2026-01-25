@@ -1,6 +1,7 @@
 using YAML
 using WAV
 using DataInterpolations
+using JLD2
 
 """
     onset_ramp(t, onset_ramp_time)
@@ -155,7 +156,7 @@ end
 
 Make initial conditions `u0` and history function `u0_history` for the DDE problem.
 """
-function make_initial_conditions(solver_params::SolverParams)
+function make_initial_conditions(solver_params::SolverParams, n::Int64)
     # Ensure that either u0_value or previous_solution_filename is provided.
     if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
         println("Pass either u0 value or previous solution filename.")
@@ -165,7 +166,7 @@ function make_initial_conditions(solver_params::SolverParams)
     if !isnothing(solver_params.u0_value)
         println("u0 value specified: $(solver_params.u0_value)")
         println("Setting all CP initial conditions and histories to this value.")
-        u0 = repeat(solver_params.u0_value, outer=ctl_constants.n+1)
+        u0 = repeat(solver_params.u0_value, outer=n+1)
         u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
         if isnothing(idxs)
             u0
@@ -180,6 +181,10 @@ function make_initial_conditions(solver_params::SolverParams)
             exit(1)
         end
         previous_t, previous_u = load(solver_params.previous_solution_filename, "t", "u")
+        if length(previous_u[1]) ÷ 2 != n + 1
+            println("Error: Previous solution size $(length(previous_u[1])) does not match the current size $(n + 1).")
+            exit(1)
+        end
         println("Setting all CP initial conditions to the last state in the previous solution.")
         u0 = previous_u[end]
         u0_history = let

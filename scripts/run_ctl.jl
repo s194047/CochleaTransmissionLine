@@ -21,7 +21,7 @@ function main()
     )
 
     # Define the initial state and history function.
-    u0, u0_history = make_initial_conditions(solver_params)
+    u0, u0_history = make_initial_conditions(solver_params, ctl_constants.n)
 
     # Define the DDE problem.
     problem = DDEProblem(

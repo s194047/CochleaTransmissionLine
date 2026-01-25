@@ -21,47 +21,7 @@ function main()
     )
 
     # Define the initial state and history function.
-    # Ensure that either u0_value or previous_solution_filename is provided.
-    if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
-        println("Pass either u0 value or previous solution filename.")
-        exit(1)
-    end
-    if !isnothing(solver_params.u0_value)
-        println("u0 value specified: $(solver_params.u0_value)")
-        println("Setting all CP initial conditions and histories to this value.")
-        u0 = repeat(solver_params.u0_value, outer=ctl_constants.n+1)
-        u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
-        if isnothing(idxs)
-            u0
-        else
-            u0[idxs]
-        end
-        println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
-    else
-        println("No u0 value specified. Loading previous solution from $(solver_params.previous_solution_filename).")
-        if !isfile(solver_params.previous_solution_filename)
-            println("Previous solution file not found: $(solver_params.previous_solution_filename)")
-            exit(1)
-        end
-        previous_t, previous_u = load(solver_params.previous_solution_filename, "t", "u")
-        println("Setting all CP initial conditions to the last state in the previous solution.")
-        u0 = previous_u[end]
-        u0_history = let
-            println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")
-            println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
-            t_offset = solver_params.tspan[1] - previous_t[end]
-            println("Shifting previous solution by $t_offset seconds to align with the current simulation.")
-            previous_t_shifted = previous_t .+ t_offset
-            interpolator = CubicSpline(previous_u, previous_t_shifted)
-            println("Defining history function using interpolation of the previous solution.")
-            (::CochleaModelParams, t::Float64; idxs=nothing) ->
-                if isnothing(idxs)
-                    interpolator(t)
-                else
-                    interpolator(t)[idxs]
-                end
-        end
-    end
+    u0, u0_history = make_initial_conditions(solver_params)
 
     # Define the DDE problem.
     problem = DDEProblem(

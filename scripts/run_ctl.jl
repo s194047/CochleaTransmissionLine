@@ -42,9 +42,16 @@ function main()
     end
     parameters_filename = ARGS[1]
 
+    # Read data output filename from command line arguments.
+    if length(ARGS) < 2
+        println("Pass data output filename as second argument.")
+        exit(1)
+    end
+    data_filename = ARGS[2]
+
     # Load parameters from config file.
     println("Loading parameters from config file: $parameters_filename")
-    (; ctl_constants, stimulus, solver_params, data_filename, metadata) = load_parameters(parameters_filename)
+    (; ctl_constants, stimulus, solver_params, metadata) = load_parameters(parameters_filename)
     model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,

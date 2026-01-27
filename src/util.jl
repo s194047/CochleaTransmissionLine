@@ -88,7 +88,6 @@ Returns a named tuple with fields:
 - `ctl_constants`: constants for the cochlea transmission line model
 - `stimulus`: stimulus definition
 - `solver_params`: solver configuration
-- `data_filename`: output data file name
 - `metadata`: metadata that can be saved with a data file
 """
 function load_parameters(parameters_filename::String)
@@ -106,7 +105,6 @@ function load_parameters(parameters_filename::String)
     # Extract sections of config file.
     stimulus_section = parameters["stimulus"]
     solver_params_section = parameters["solver_params"]
-    data_section = parameters["data"]
 
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
@@ -131,9 +129,6 @@ function load_parameters(parameters_filename::String)
         saveat = get(solver_params_section, "saveat", []),
     )
 
-    # Read data filename for saving results.
-    data_filename = data_section["data_filename"]
-
     metadata = Dict(
         "parameters_filename" => parameters_filename,
         "model_constants_filename" => model_constants_filename,
@@ -146,7 +141,6 @@ function load_parameters(parameters_filename::String)
         ctl_constants=ctl_constants,
         stimulus=stimulus,
         solver_params=solver_params,
-        data_filename=data_filename,
         metadata=metadata,
     )
 end

@@ -1,7 +1,7 @@
 using SciMLBase: ODESolution
 
 mutable struct UHistory
-    history_function::ODESolution
+    history_function::Union{ODESolution, Function, Nothing}
 end
 
 function (u_history::UHistory)(::Any, t::Float64; idxs)

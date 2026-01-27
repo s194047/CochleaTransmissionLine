@@ -150,7 +150,7 @@ end
 
 Make initial conditions `u0` and history function `u0_history` for the DDE problem.
 """
-function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple{Vector{Float64}, Function}
+function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple{Vector{Float64}, UHistory}
     # Ensure that either u0_value or previous_solution_filename is provided.
     if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
         println("Pass either u0 value or previous solution filename.")
@@ -161,7 +161,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple
         println("u0 value specified: $(solver_params.u0_value)")
         println("Setting all CP initial conditions and histories to this value.")
         u0 = repeat(solver_params.u0_value, outer=n+1)
-        u0_history_lambda = (::CochleaModelParams, ::Float64; idxs=nothing) ->
+        u0_history_lambda = (::Float64; idxs=nothing) ->
         if isnothing(idxs)
             u0
         else
@@ -189,7 +189,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple
             previous_t_shifted = previous_t .+ t_offset
             interpolator = CubicSpline(previous_u, previous_t_shifted)
             println("Defining history function using interpolation of the previous solution.")
-            (::CochleaModelParams, t::Float64; idxs=nothing) ->
+            (t::Float64; idxs=nothing) ->
                 if isnothing(idxs)
                     interpolator(t)
                 else
@@ -198,5 +198,5 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple
         end
     end
 
-    (u0, u0_history_lambda)
+    (u0, UHistory(u0_history_lambda))
 end

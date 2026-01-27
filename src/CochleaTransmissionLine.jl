@@ -2,7 +2,7 @@ module CochleaTransmissionLine
 
 include("history.jl")
 export UHistory
-export forget_previous_solution
+export forget_history_function
 
 include("model.jl")
 export CochleaTransmissionLineConstants

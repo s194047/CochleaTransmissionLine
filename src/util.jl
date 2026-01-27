@@ -88,7 +88,7 @@ Returns a named tuple with fields:
 - `ctl_constants`: constants for the cochlea transmission line model
 - `stimulus`: stimulus definition
 - `solver_params`: solver configuration
-- `metadata`: metadata that can be saved with a data file
+- `metadata`: metadata containing information about the loaded parameters and simulation info
 """
 function load_parameters(parameters_filename::String)
     parameters = YAML.load_file(parameters_filename)

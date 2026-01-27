@@ -8,7 +8,7 @@ using TimeZones
 function run_simulation(
     differential_equation::Function,
     u0::Vector{Float64},
-    u0_history::UHistory,
+    u_history::UHistory,
     tspan::Union{Tuple{Float64, Float64}, Vector{Float64}},
     model_params::CochleaModelParams,
     solver_params::SolverParams,
@@ -17,7 +17,7 @@ function run_simulation(
     problem = DDEProblem(
         differential_equation,
         u0,
-        u0_history,
+        u_history,
         tspan,
         model_params,
     )
@@ -58,7 +58,7 @@ function main()
     )
 
     # Define the initial state and history function.
-    u0, u0_history = make_initial_conditions(solver_params, ctl_constants.n)
+    u0, u_history = make_initial_conditions(solver_params, ctl_constants.n)
 
     # Determine the maximum run time based on the maximum delay in the system.
     max_delay = maximum(model_params.ctl_params.τ_values)
@@ -89,7 +89,7 @@ function main()
         solution, start_timestamp, duration_seconds = run_simulation(
             cochlea_transmission_line!,
             u0,
-            u0_history,
+            u_history,
             interval,
             model_params,
             solver_params,
@@ -107,12 +107,12 @@ function main()
         end
 
         # Clear the reference to the previous solution to release the memory between iterations.
-        forget_history_function(u0_history)
+        forget_history_function(u_history)
 
         # Update initial conditions and history function for the next interval.
         println("Updating initial conditions for next interval.")
         u0 = solution.u[end]
-        u0_history = UHistory(solution)
+        u_history = UHistory(solution)
 
         # Record simulation info metadata.
         push!(metadata["duration_seconds_values"], duration_seconds)

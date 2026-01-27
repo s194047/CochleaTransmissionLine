@@ -1,5 +1,9 @@
 module CochleaTransmissionLine
 
+include("history.jl")
+export UHistory
+export forget_previous_solution
+
 include("model.jl")
 export CochleaTransmissionLineConstants
 export CochleaModelParams

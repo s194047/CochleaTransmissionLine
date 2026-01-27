@@ -8,7 +8,7 @@ using TimeZones
 function run_simulation(
     differential_equation::Function,
     u0::Vector{Float64},
-    u0_history::Function,
+    u0_history,
     tspan::Union{Tuple{Float64, Float64}, Vector{Float64}},
     model_params::CochleaModelParams,
     solver_params::SolverParams,
@@ -109,8 +109,7 @@ function main()
         # Update initial conditions and history function for the next interval.
         println("Updating initial conditions for next interval.")
         u0 = solution.u[end]
-        u0_history = (::CochleaModelParams, t::Float64; idxs=nothing) ->
-            solution(t; idxs=idxs)
+        u0_history = UHistory(solution)
 
         # Record simulation info metadata.
         push!(metadata["duration_seconds_values"], duration_seconds)

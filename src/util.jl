@@ -150,7 +150,7 @@ end
 
 Make initial conditions `u0` and history function `u0_history` for the DDE problem.
 """
-function make_initial_conditions(solver_params::SolverParams, n::Int64)
+function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple{Vector{Float64}, Function}
     # Ensure that either u0_value or previous_solution_filename is provided.
     if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
         println("Pass either u0 value or previous solution filename.")
@@ -161,7 +161,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
         println("u0 value specified: $(solver_params.u0_value)")
         println("Setting all CP initial conditions and histories to this value.")
         u0 = repeat(solver_params.u0_value, outer=n+1)
-        u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
+        u0_history_lambda = (::CochleaModelParams, ::Float64; idxs=nothing) ->
         if isnothing(idxs)
             u0
         else
@@ -181,7 +181,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
         end
         println("Setting all CP initial conditions to the last state in the previous solution.")
         u0 = previous_u[end]
-        u0_history = let
+        u0_history_lambda = let
             println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")
             println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
             t_offset = solver_params.tspan[1] - previous_t[end]
@@ -198,5 +198,5 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
         end
     end
 
-    (u0, u0_history)
+    (u0, u0_history_lambda)
 end

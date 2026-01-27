@@ -88,8 +88,7 @@ Returns a named tuple with fields:
 - `ctl_constants`: constants for the cochlea transmission line model
 - `stimulus`: stimulus definition
 - `solver_params`: solver configuration
-- `data_filename`: output data file name
-- `metadata`: metadata that can be saved with a data file
+- `metadata`: metadata containing information about the loaded parameters and simulation info
 """
 function load_parameters(parameters_filename::String)
     parameters = YAML.load_file(parameters_filename)
@@ -106,7 +105,6 @@ function load_parameters(parameters_filename::String)
     # Extract sections of config file.
     stimulus_section = parameters["stimulus"]
     solver_params_section = parameters["solver_params"]
-    data_section = parameters["data"]
 
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
@@ -131,9 +129,6 @@ function load_parameters(parameters_filename::String)
         saveat = get(solver_params_section, "saveat", []),
     )
 
-    # Read data filename for saving results.
-    data_filename = data_section["data_filename"]
-
     metadata = Dict(
         "parameters_filename" => parameters_filename,
         "model_constants_filename" => model_constants_filename,
@@ -146,7 +141,6 @@ function load_parameters(parameters_filename::String)
         ctl_constants=ctl_constants,
         stimulus=stimulus,
         solver_params=solver_params,
-        data_filename=data_filename,
         metadata=metadata,
     )
 end
@@ -154,9 +148,9 @@ end
 """
     make_initial_conditions(solver_params)
 
-Make initial conditions `u0` and history function `u0_history` for the DDE problem.
+Make initial conditions `u0` and history function `u_history` for the DDE problem.
 """
-function make_initial_conditions(solver_params::SolverParams, n::Int64)
+function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple{Vector{Float64}, UHistory}
     # Ensure that either u0_value or previous_solution_filename is provided.
     if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
         println("Pass either u0 value or previous solution filename.")
@@ -167,7 +161,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
         println("u0 value specified: $(solver_params.u0_value)")
         println("Setting all CP initial conditions and histories to this value.")
         u0 = repeat(solver_params.u0_value, outer=n+1)
-        u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
+        u_history_lambda = (::Float64; idxs=nothing) ->
         if isnothing(idxs)
             u0
         else
@@ -187,7 +181,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
         end
         println("Setting all CP initial conditions to the last state in the previous solution.")
         u0 = previous_u[end]
-        u0_history = let
+        u_history_lambda = let
             println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")
             println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
             t_offset = solver_params.tspan[1] - previous_t[end]
@@ -195,7 +189,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
             previous_t_shifted = previous_t .+ t_offset
             interpolator = CubicSpline(previous_u, previous_t_shifted)
             println("Defining history function using interpolation of the previous solution.")
-            (::CochleaModelParams, t::Float64; idxs=nothing) ->
+            (t::Float64; idxs=nothing) ->
                 if isnothing(idxs)
                     interpolator(t)
                 else
@@ -204,5 +198,5 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64)
         end
     end
 
-    (u0, u0_history)
+    (u0, UHistory(u_history_lambda))
 end

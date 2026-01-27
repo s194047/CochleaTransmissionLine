@@ -20,7 +20,4 @@ solver_params:
   # Leave out if the solution should not be sampled when solving.
   #saveat: 1e-5
 
-data:
-  data_filename: "data/example.jld2"
-
 # TODO: Add more descriptions to make this a proper example file.

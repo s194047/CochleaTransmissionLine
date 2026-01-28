@@ -117,10 +117,6 @@ function main()
         # Record simulation info metadata.
         push!(metadata["duration_seconds_values"], duration_seconds)
         push!(metadata["start_timestamp_values"], start_timestamp)
-
-        # FIXME: Remove this when the memory issue is solved.
-        # Print the memory size of `solution` for diagnostics
-        @show Base.summarysize(solution)
     end
 
     # Save the solution to disk.

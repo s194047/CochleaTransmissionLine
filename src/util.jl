@@ -48,25 +48,24 @@ function load_stimulus(stimulus::Dict)
         gain = get(stimulus, "gain", 1.0)
         onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
         println("Loading stimulus from audio file: $filename")
-        y, fs = wavread(filename)
+        y, fs::Float64 = wavread(filename)
         n_channels = size(y, 2)
         if n_channels > 1
             println("Audio file is stereo with $n_channels channels. Taking first channel only.")
         end
-        y = y[:, 1] # Make sure y is a vector (take first channel if stereo)
-        y .= gain .* y
+        y_vector_gained = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
         println("Applied gain of $gain to audio signal.")
-        duration = length(y) / fs
+        duration = length(y_vector_gained) / fs
         println("Audio file sample rate: $fs Hz, duration: $duration seconds")
-        t_audio = LinRange(0, duration - 1/fs, length(y))
-        interpolator = CubicSpline(y[:, 1], t_audio)
+        t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
+        onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
         if onset_ramp_time > 0.0
             println("Applying onset ramp time of $onset_ramp_time seconds")
-            (t::Float64) -> onset_ramp(t, onset_ramp_time) * interpolator(t)
         else
             println("No onset ramp time applied")
-            (t::Float64) -> interpolator(t)
         end
+        interpolator = CubicSpline(y_vector_gained[:, 1] .* onset_ramp_values, t_audio, cache_parameters=true)
+        (t::Float64) -> interpolator(t)
     else
         error("Unknown stimulus type: $(stimulus["type"])")
     end

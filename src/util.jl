@@ -27,26 +27,26 @@ Load a stimulus given a dictionary definition.
 
 Returns a function `stimulus(t::Float64) -> Float64`, where `t` is time in seconds.
 """
-function load_stimulus(stimulus::Dict)
-    if stimulus["type"] == "zero"
+function load_stimulus(stimulus_dict::Dict)
+    if stimulus_dict["type"] == "zero"
         println("No stimulus")
-        (::Float64) -> 0.0
-    elseif stimulus["type"] == "sine"
-        frequency = stimulus["frequency"]
-        amplitude = stimulus["amplitude"]
-        onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
+        stimulus = (::Float64) -> 0.0
+    elseif stimulus_dict["type"] == "sine"
+        frequency = stimulus_dict["frequency"]
+        amplitude = stimulus_dict["amplitude"]
+        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
         println("Sinusoidal stimulus with frequency: $frequency and amplitude: $amplitude")
         if onset_ramp_time > 0.0
             println("Applying onset ramp time of $onset_ramp_time seconds")
-            (t::Float64) -> amplitude * onset_ramp(t, onset_ramp_time) * sin(2π * frequency * t)
+            stimulus = (t::Float64) -> amplitude * onset_ramp(t, onset_ramp_time) * sin(2π * frequency * t)
         else
             println("No onset ramp time applied")
-            (t::Float64) -> amplitude * sin(2π * frequency * t)
+            stimulus = (t::Float64) -> amplitude * sin(2π * frequency * t)
         end
-    elseif stimulus["type"] == "audio"
-        filename = stimulus["filename"]
-        gain = get(stimulus, "gain", 1.0)
-        onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
+    elseif stimulus_dict["type"] == "audio"
+        filename = stimulus_dict["filename"]
+        gain = get(stimulus_dict, "gain", 1.0)
+        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
         println("Loading stimulus from audio file: $filename")
         y, fs::Float64 = wavread(filename)
         n_channels = size(y, 2)
@@ -65,10 +65,12 @@ function load_stimulus(stimulus::Dict)
             println("No onset ramp time applied")
         end
         interpolator = CubicSpline(y_vector_gained[:, 1] .* onset_ramp_values, t_audio, cache_parameters=true)
-        (t::Float64) -> interpolator(t)
+        stimulus = (t::Float64) -> interpolator(t)
     else
-        error("Unknown stimulus type: $(stimulus["type"])")
+        error("Unknown stimulus type: $(stimulus_dict["type"])")
     end
+
+    stimulus
 end
 
 @kwdef struct SolverParams

@@ -27,49 +27,66 @@ Load a stimulus given a dictionary definition.
 
 Returns a function `stimulus(t::Float64) -> Float64`, where `t` is time in seconds.
 """
-function load_stimulus(stimulus::Dict)
-    if stimulus["type"] == "zero"
+function load_stimulus(stimulus_dict::Dict)
+    if stimulus_dict["type"] == "zero"
         println("No stimulus")
-        (::Float64) -> 0.0
-    elseif stimulus["type"] == "sine"
-        frequency = stimulus["frequency"]
-        amplitude = stimulus["amplitude"]
-        onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
+
+        stimulus = (::Float64) -> 0.0
+
+    elseif stimulus_dict["type"] == "sine"
+        frequency = stimulus_dict["frequency"]
+        amplitude = stimulus_dict["amplitude"]
+        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
+
         println("Sinusoidal stimulus with frequency: $frequency and amplitude: $amplitude")
+
         if onset_ramp_time > 0.0
             println("Applying onset ramp time of $onset_ramp_time seconds")
-            (t::Float64) -> amplitude * onset_ramp(t, onset_ramp_time) * sin(2π * frequency * t)
+            stimulus = (t::Float64) -> amplitude * onset_ramp(t, onset_ramp_time) * sin(2π * frequency * t)
         else
             println("No onset ramp time applied")
-            (t::Float64) -> amplitude * sin(2π * frequency * t)
+            stimulus = (t::Float64) -> amplitude * sin(2π * frequency * t)
         end
-    elseif stimulus["type"] == "audio"
-        filename = stimulus["filename"]
-        gain = get(stimulus, "gain", 1.0)
-        onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
+
+    elseif stimulus_dict["type"] == "audio"
+        filename = stimulus_dict["filename"]
+        gain = get(stimulus_dict, "gain", 1.0)
+        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
+
         println("Loading stimulus from audio file: $filename")
-        y, fs = wavread(filename)
+        y, fs::Float64 = wavread(filename)
+
         n_channels = size(y, 2)
         if n_channels > 1
-            println("Audio file is stereo with $n_channels channels. Taking first channel only.")
+            println("Audio file has $n_channels channels. Using first channel only.")
         end
-        y = y[:, 1] # Make sure y is a vector (take first channel if stereo)
-        y .= gain .* y
+
+        y_vector_gained = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
         println("Applied gain of $gain to audio signal.")
-        duration = length(y) / fs
+
+        duration = length(y_vector_gained) / fs
         println("Audio file sample rate: $fs Hz, duration: $duration seconds")
-        t_audio = LinRange(0, duration - 1/fs, length(y))
-        interpolator = CubicSpline(y[:, 1], t_audio)
-        if onset_ramp_time > 0.0
-            println("Applying onset ramp time of $onset_ramp_time seconds")
-            (t::Float64) -> onset_ramp(t, onset_ramp_time) * interpolator(t)
-        else
-            println("No onset ramp time applied")
-            (t::Float64) -> interpolator(t)
-        end
+
+        t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
+
+        println("Applying onset ramp time of $onset_ramp_time seconds")
+        onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
+        y_vector_gained_windowed = y_vector_gained[:, 1] .* onset_ramp_values
+
+        t_audio_zero_padded = [t_audio[1] - 1/fs; t_audio; t_audio[end] + 1/fs]
+        y_vector_gained_windowed_zero_padded = [0.0; y_vector_gained_windowed; 0.0]
+        interpolator = CubicSpline(
+            y_vector_gained_windowed_zero_padded,
+            t_audio_zero_padded,
+            cache_parameters=true,
+            extrapolation=ExtrapolationType.Constant
+        )
+        stimulus = (t::Float64) -> interpolator(t)
     else
-        error("Unknown stimulus type: $(stimulus["type"])")
+        error("Unknown stimulus type: $(stimulus_dict["type"])")
     end
+
+    stimulus
 end
 
 @kwdef struct SolverParams

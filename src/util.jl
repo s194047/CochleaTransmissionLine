@@ -204,7 +204,7 @@ function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple
             t_offset = solver_params.tspan[1] - previous_t[end]
             println("Shifting previous solution by $t_offset seconds to align with the current simulation.")
             previous_t_shifted = previous_t .+ t_offset
-            interpolator = CubicSpline(previous_u, previous_t_shifted)
+            interpolator = CubicSpline(previous_u, previous_t_shifted, cache_parameters=true)
             println("Defining history function using interpolation of the previous solution.")
             (t::Float64; idxs=nothing) ->
                 if isnothing(idxs)

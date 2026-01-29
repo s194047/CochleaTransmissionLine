@@ -58,12 +58,8 @@ function load_stimulus(stimulus_dict::Dict)
         duration = length(y_vector_gained) / fs
         println("Audio file sample rate: $fs Hz, duration: $duration seconds")
         t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
+        println("Applying onset ramp time of $onset_ramp_time seconds")
         onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
-        if onset_ramp_time > 0.0
-            println("Applying onset ramp time of $onset_ramp_time seconds")
-        else
-            println("No onset ramp time applied")
-        end
         interpolator = CubicSpline(y_vector_gained[:, 1] .* onset_ramp_values, t_audio, cache_parameters=true)
         stimulus = (t::Float64) -> interpolator(t)
     else

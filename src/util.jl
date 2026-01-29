@@ -60,7 +60,16 @@ function load_stimulus(stimulus_dict::Dict)
         t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
         println("Applying onset ramp time of $onset_ramp_time seconds")
         onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
-        interpolator = CubicSpline(y_vector_gained[:, 1] .* onset_ramp_values, t_audio, cache_parameters=true)
+        y_vector_gained_windowed = y_vector_gained[:, 1] .* onset_ramp_values
+
+        t_audio_zero_padded = [t_audio[1] - 1/fs; t_audio; t_audio[end] + 1/fs]
+        y_vector_gained_windowed_zero_padded = [0.0; y_vector_gained_windowed; 0.0]
+        interpolator = CubicSpline(
+            y_vector_gained_windowed_zero_padded,
+            t_audio_zero_padded,
+            cache_parameters=true,
+            extrapolation=ExtrapolationType.Constant
+        )
         stimulus = (t::Float64) -> interpolator(t)
     else
         error("Unknown stimulus type: $(stimulus_dict["type"])")

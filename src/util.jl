@@ -1,6 +1,7 @@
 using YAML
 using WAV
 using DataInterpolations
+using JLD2
 
 """
     amplitude_from_filename(filename)
@@ -35,49 +36,66 @@ Load a stimulus given a dictionary definition.
 
 Returns a function `stimulus(t::Float64) -> Float64`, where `t` is time in seconds.
 """
-function load_stimulus(stimulus::Dict)
-    if stimulus["type"] == "zero"
+function load_stimulus(stimulus_dict::Dict)
+    if stimulus_dict["type"] == "zero"
         println("No stimulus")
-        (::Float64) -> 0.0
-    elseif stimulus["type"] == "sine"
-        frequency = stimulus["frequency"]
-        amplitude = stimulus["amplitude"]
-        onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
+
+        stimulus = (::Float64) -> 0.0
+
+    elseif stimulus_dict["type"] == "sine"
+        frequency = stimulus_dict["frequency"]
+        amplitude = stimulus_dict["amplitude"]
+        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
+
         println("Sinusoidal stimulus with frequency: $frequency and amplitude: $amplitude")
+
         if onset_ramp_time > 0.0
             println("Applying onset ramp time of $onset_ramp_time seconds")
-            (t::Float64) -> amplitude * onset_ramp(t, onset_ramp_time) * sin(2π * frequency * t)
+            stimulus = (t::Float64) -> amplitude * onset_ramp(t, onset_ramp_time) * sin(2π * frequency * t)
         else
             println("No onset ramp time applied")
-            (t::Float64) -> amplitude * sin(2π * frequency * t)
+            stimulus = (t::Float64) -> amplitude * sin(2π * frequency * t)
         end
-    elseif stimulus["type"] == "audio"
-        filename = stimulus["filename"]
-        gain = get(stimulus, "gain", 1.0)
-        onset_ramp_time = get(stimulus, "onset_ramp_time", 0.0)
+
+    elseif stimulus_dict["type"] == "audio"
+        filename = stimulus_dict["filename"]
+        gain = get(stimulus_dict, "gain", 1.0)
+        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
+
         println("Loading stimulus from audio file: $filename")
-        y, fs = wavread(filename)
+        y, fs::Float64 = wavread(filename)
+
         n_channels = size(y, 2)
         if n_channels > 1
-            println("Audio file is stereo with $n_channels channels. Taking first channel only.")
+            println("Audio file has $n_channels channels. Using first channel only.")
         end
-        y = y[:, 1] # Make sure y is a vector (take first channel if stereo)
-        y .= gain .* y
+
+        y_vector_gained = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
         println("Applied gain of $gain to audio signal.")
-        duration = length(y) / fs
+
+        duration = length(y_vector_gained) / fs
         println("Audio file sample rate: $fs Hz, duration: $duration seconds")
-        t_audio = LinRange(0, duration - 1/fs, length(y))
-        interpolator = CubicSpline(y[:, 1], t_audio)
-        if onset_ramp_time > 0.0
-            println("Applying onset ramp time of $onset_ramp_time seconds")
-            (t::Float64) -> onset_ramp(t, onset_ramp_time) * interpolator(t)
-        else
-            println("No onset ramp time applied")
-            (t::Float64) -> interpolator(t)
-        end
+
+        t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
+
+        println("Applying onset ramp time of $onset_ramp_time seconds")
+        onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
+        y_vector_gained_windowed = y_vector_gained[:, 1] .* onset_ramp_values
+
+        t_audio_zero_padded = [t_audio[1] - 1/fs; t_audio; t_audio[end] + 1/fs]
+        y_vector_gained_windowed_zero_padded = [0.0; y_vector_gained_windowed; 0.0]
+        interpolator = CubicSpline(
+            y_vector_gained_windowed_zero_padded,
+            t_audio_zero_padded,
+            cache_parameters=true,
+            extrapolation=ExtrapolationType.Constant
+        )
+        stimulus = (t::Float64) -> interpolator(t)
     else
-        error("Unknown stimulus type: $(stimulus["type"])")
+        error("Unknown stimulus type: $(stimulus_dict["type"])")
     end
+
+    stimulus
 end
 
 @kwdef struct SolverParams
@@ -96,8 +114,7 @@ Returns a named tuple with fields:
 - `ctl_constants`: constants for the cochlea transmission line model
 - `stimulus`: stimulus definition
 - `solver_params`: solver configuration
-- `data_filename`: output data file name
-- `metadata`: metadata that can be saved with a data file
+- `metadata`: metadata containing information about the loaded parameters and simulation info
 """
 function load_parameters(parameters_filename::String)
     parameters = YAML.load_file(parameters_filename)
@@ -114,7 +131,6 @@ function load_parameters(parameters_filename::String)
     # Extract sections of config file.
     stimulus_section = parameters["stimulus"]
     solver_params_section = parameters["solver_params"]
-    data_section = parameters["data"]
 
     # Read the cochlea transmission line constants.
     ctl_constants = CochleaTransmissionLineConstants(
@@ -139,9 +155,6 @@ function load_parameters(parameters_filename::String)
         saveat = get(solver_params_section, "saveat", []),
     )
 
-    # Read data filename for saving results.
-    data_filename = data_section["data_filename"]
-
     metadata = Dict(
         "parameters_filename" => parameters_filename,
         "model_constants_filename" => model_constants_filename,
@@ -154,7 +167,62 @@ function load_parameters(parameters_filename::String)
         ctl_constants=ctl_constants,
         stimulus=stimulus,
         solver_params=solver_params,
-        data_filename=data_filename,
         metadata=metadata,
     )
+end
+
+"""
+    make_initial_conditions(solver_params)
+
+Make initial conditions `u0` and history function `u_history` for the DDE problem.
+"""
+function make_initial_conditions(solver_params::SolverParams, n::Int64) :: Tuple{Vector{Float64}, UHistory}
+    # Ensure that either u0_value or previous_solution_filename is provided.
+    if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
+        println("Pass either u0 value or previous solution filename.")
+        exit(1)
+    end
+
+    if !isnothing(solver_params.u0_value)
+        println("u0 value specified: $(solver_params.u0_value)")
+        println("Setting all CP initial conditions and histories to this value.")
+        u0 = repeat(solver_params.u0_value, outer=n+1)
+        u_history_lambda = (::Float64; idxs=nothing) ->
+        if isnothing(idxs)
+            u0
+        else
+            u0[idxs]
+        end
+        println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
+    else
+        println("No u0 value specified. Loading previous solution from $(solver_params.previous_solution_filename).")
+        if !isfile(solver_params.previous_solution_filename)
+            println("Previous solution file not found: $(solver_params.previous_solution_filename)")
+            exit(1)
+        end
+        previous_t, previous_u = load(solver_params.previous_solution_filename, "t", "u")
+        if length(previous_u[1]) ÷ 2 != n + 1
+            println("Error: Previous solution size $(length(previous_u[1])) does not match the current size $(n + 1).")
+            exit(1)
+        end
+        println("Setting all CP initial conditions to the last state in the previous solution.")
+        u0 = previous_u[end]
+        u_history_lambda = let
+            println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")
+            println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
+            t_offset = solver_params.tspan[1] - previous_t[end]
+            println("Shifting previous solution by $t_offset seconds to align with the current simulation.")
+            previous_t_shifted = previous_t .+ t_offset
+            interpolator = CubicSpline(previous_u, previous_t_shifted, cache_parameters=true)
+            println("Defining history function using interpolation of the previous solution.")
+            (t::Float64; idxs=nothing) ->
+                if isnothing(idxs)
+                    interpolator(t)
+                else
+                    interpolator(t)[idxs]
+                end
+        end
+    end
+
+    (u0, UHistory(u_history_lambda))
 end

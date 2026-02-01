@@ -1,5 +1,9 @@
 module CochleaTransmissionLine
 
+include("history.jl")
+export UHistory
+export forget_history_function
+
 include("model.jl")
 export CochleaTransmissionLineConstants
 export CochleaModelParams
@@ -15,5 +19,6 @@ export amplitude_from_filename
 export load_stimulus
 export SolverParams
 export load_parameters
+export make_initial_conditions
 
 end # module CochleaTransmissionLine

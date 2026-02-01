@@ -3,72 +3,22 @@ using CochleaTransmissionLine
 using DelayDiffEq
 using JLD2
 using DataInterpolations
+using TimeZones
 
-function main()
-    # Read config filename from command line arguments.
-    if length(ARGS) < 1
-        println("Pass parameter YAML file as first argument.")
-        exit(1)
-    end
-    config_filename = ARGS[1]
-
-    # Load parameters from config file.
-    println("Loading parameters from config file: $config_filename")
-    (; ctl_constants, stimulus, solver_params, data_filename, metadata) = load_parameters(config_filename)
-    model_params = makeCochleaModelParams(
-        ctl_constants,
-        stimulus,
-    )
-
-    # Define the initial state and history function.
-    # Ensure that either u0_value or previous_solution_filename is provided.
-    if isnothing(solver_params.u0_value) && isnothing(solver_params.previous_solution_filename)
-        println("Pass either u0 value or previous solution filename.")
-        exit(1)
-    end
-    if !isnothing(solver_params.u0_value)
-        println("u0 value specified: $(solver_params.u0_value)")
-        println("Setting all CP initial conditions and histories to this value.")
-        u0 = repeat(solver_params.u0_value, outer=ctl_constants.n+1)
-        u0_history = (::CochleaModelParams, ::Float64; idxs=nothing) ->
-        if isnothing(idxs)
-            u0
-        else
-            u0[idxs]
-        end
-        println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
-    else
-        println("No u0 value specified. Loading previous solution from $(solver_params.previous_solution_filename).")
-        if !isfile(solver_params.previous_solution_filename)
-            println("Previous solution file not found: $(solver_params.previous_solution_filename)")
-            exit(1)
-        end
-        previous_t, previous_u = load(solver_params.previous_solution_filename, "t", "u")
-        println("Setting all CP initial conditions to the last state in the previous solution.")
-        u0 = previous_u[end]
-        u0_history = let
-            println("Previous solution timespan: ($(previous_t[1]), $(previous_t[end]))")
-            println("Current simulation timespan: ($(solver_params.tspan[1]), $(solver_params.tspan[2]))")
-            t_offset = solver_params.tspan[1] - previous_t[end]
-            println("Shifting previous solution by $t_offset seconds to align with the current simulation.")
-            previous_t_shifted = previous_t .+ t_offset
-            interpolator = CubicSpline(previous_u, previous_t_shifted)
-            println("Defining history function using interpolation of the previous solution.")
-            (::CochleaModelParams, t::Float64; idxs=nothing) ->
-                if isnothing(idxs)
-                    interpolator(t)
-                else
-                    interpolator(t)[idxs]
-                end
-        end
-    end
-
+function run_simulation(
+    differential_equation::Function,
+    u0::Vector{Float64},
+    u_history::UHistory,
+    tspan::Union{Tuple{Float64, Float64}, Vector{Float64}},
+    model_params::CochleaModelParams,
+    solver_params::SolverParams,
+)
     # Define the DDE problem.
     problem = DDEProblem(
-        cochlea_transmission_line!,
+        differential_equation,
         u0,
-        u0_history,
-        solver_params.tspan,
+        u_history,
+        tspan,
         model_params,
     )
 
@@ -77,16 +27,105 @@ function main()
 
     # Run the simulation and log the time taken.
     println("Starting simulation...")
-    simulation_time = @elapsed solution = solve(problem, saveat=solver_params.saveat, algorithm)
-    println("Simulation completed in $(simulation_time) seconds.")
+    start_timestamp = now(localzone())
+    duration_seconds = @elapsed solution = solve(problem, saveat=solver_params.saveat, algorithm)
+    println("Simulation completed in $(duration_seconds) seconds.")
+
+    (solution, start_timestamp, duration_seconds)
+end
+
+function main()
+    # Read config filename from command line arguments.
+    if length(ARGS) < 1
+        println("Pass parameter YAML file as first argument.")
+        exit(1)
+    end
+    parameters_filename = ARGS[1]
+
+    # Read data output filename from command line arguments.
+    if length(ARGS) < 2
+        println("Pass data output filename as second argument.")
+        exit(1)
+    end
+    data_filename = ARGS[2]
+
+    # Load parameters from config file.
+    println("Loading parameters from config file: $parameters_filename")
+    (; ctl_constants, stimulus, solver_params, metadata) = load_parameters(parameters_filename)
+    model_params = makeCochleaModelParams(
+        ctl_constants,
+        stimulus,
+    )
+
+    # Define the initial state and history function.
+    u0, u_history = make_initial_conditions(solver_params, ctl_constants.n)
+
+    # Determine the maximum run time based on the maximum delay in the system.
+    max_delay = maximum(model_params.ctl_params.τ_values)
+    max_run_time = ceil(max_delay, digits=1)
+    println("Maximum delay in system: $max_delay seconds.")
+    println("Maximum run time per segment: $max_run_time seconds.")
+
+    # Divide the timespan into segments to avoid excessive memory usage.
+    intervals = let
+        t0, t1 = solver_params.tspan;
+        edges = collect(t0:max_run_time:t1);
+        edges[end] < t1 && push!(edges, t1);
+        [(edges[i], edges[i+1]) for i in 1:length(edges)-1]
+    end
+    println("Divided total timespan into $(length(intervals)) intervals of $max_run_time seconds each.")
+
+    # Initialize empty arrays for solution t and u and for simulation info metadata.
+    # TODO: Consider zipping t and u to named tuples.
+    t = Vector{Float64}()
+    u = Vector{Vector{Float64}}()
+    metadata["duration_seconds_values"] = Vector{Float64}()
+    metadata["start_timestamp_values"] = Vector{ZonedDateTime}()
+
+    # Run the simulation in segments.
+    for interval in intervals
+        println("Running simulation for interval: $interval")
+        # Run the simulation for the current interval.
+        solution, start_timestamp, duration_seconds = run_simulation(
+            cochlea_transmission_line!,
+            u0,
+            u_history,
+            interval,
+            model_params,
+            solver_params,
+        )
+
+        # Append the results to the overall solution.
+        if isempty(t) || solution.t[1] > t[end]
+            # This is the first segment or (not expected) the new segment does not start exactly where the previous ended.
+            append!(t, solution.t)
+            append!(u, solution.u)
+        else
+            # Avoid duplicating the initial time point of the new segment.
+            append!(t, solution.t[2:end])
+            append!(u, solution.u[2:end])
+        end
+
+        # Clear the reference to the previous solution to release the memory between iterations.
+        forget_history_function(u_history)
+
+        # Update initial conditions and history function for the next interval.
+        println("Updating initial conditions for next interval.")
+        u0 = solution.u[end]
+        u_history = UHistory(solution)
+
+        # Record simulation info metadata.
+        push!(metadata["duration_seconds_values"], duration_seconds)
+        push!(metadata["start_timestamp_values"], start_timestamp)
+    end
 
     # Save the solution to disk.
     println("Saving solution to $data_filename...")
     mkpath(dirname(data_filename))
     jldsave(
         "$data_filename";
-        solution.t,
-        solution.u,
+        t,
+        u,
         metadata,
     )
     println("Solution saved successfully.")

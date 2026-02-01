@@ -2,7 +2,7 @@
 
 julia_version = "1.12.4"
 manifest_format = "2.0"
-project_hash = "0b6499b32fa94ce55523aaf938fa39d6aaa66c5d"
+project_hash = "431f8d9db094ab72f290722328c740c71e96f546"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -66,6 +66,12 @@ deps = ["PtrArrays", "Random"]
 git-tree-sha1 = "9876e1e164b144ca45e9e3198d0b689cadfed9ff"
 uuid = "66dad0bd-aa9a-41b7-9441-69ab47430ed8"
 version = "1.1.3"
+
+[[deps.ArgParse]]
+deps = ["Logging", "TextWrap"]
+git-tree-sha1 = "22cf435ac22956a7b45b0168abbc871176e7eecc"
+uuid = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+version = "1.2.0"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -2169,6 +2175,11 @@ deps = ["Pkg"]
 git-tree-sha1 = "09a25374d0c0ccdd2f0ada8ac64f6555f3a13b31"
 uuid = "1e6cf692-eddd-4d53-88a5-2d735e33781b"
 version = "1.103.1"
+
+[[deps.TextWrap]]
+git-tree-sha1 = "43044b737fa70bc12f6105061d3da38f881a3e3c"
+uuid = "b718987f-49a8-5099-9789-dcd902bef87d"
+version = "1.0.2"
 
 [[deps.ThreadingUtilities]]
 deps = ["ManualMemory"]

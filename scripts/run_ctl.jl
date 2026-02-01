@@ -1,9 +1,90 @@
 using CochleaTransmissionLine
 
+using ArgParse
 using DelayDiffEq
 using JLD2
 using DataInterpolations
 using TimeZones
+
+function argparse_error(arg_defs::ArgParseSettings, message::String)
+    println(stderr, "$message")
+    println(stderr, usage_string(arg_defs))
+    exit(1)
+end
+
+function parse_commandline()::Dict
+    stimulus_params_file_opt = "stimulus-params-file"
+    stimulus_audio_file_opt = "stimulus-audio-file"
+    stimulus_audio_gain_opt = "stimulus-audio-gain"
+    stimulus_audio_onset_ramp_time_opt = "stimulus-audio-onset-ramp-time"
+
+    arg_defs = ArgParseSettings()
+    add_arg_table(arg_defs,
+        "--model-constants-file", Dict(
+            :help => "YAML file containing model constants",
+            :arg_type => String,
+            :metavar => "FILENAME",
+            :required => true,
+        ),
+        "--solver-params-file", Dict(
+            :help => "YAML file containing solver parameters",
+            :arg_type => String,
+            :metavar => "FILENAME",
+            :required => true,
+        ),
+        "--$stimulus_params_file_opt", Dict(
+            :help => "YAML file containing stimulus configuration",
+            :arg_type => String,
+            :metavar => "FILENAME",
+        ),
+        "--$stimulus_audio_file_opt", Dict(
+            :help => "WAV file containing stimulus audio",
+            :arg_type => String,
+            :metavar => "FILENAME",
+        ),
+        "--$stimulus_audio_gain_opt", Dict(
+            :help => "Stimulus gain if an audio file is passed",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
+        "--$stimulus_audio_onset_ramp_time_opt", Dict(
+            :help => "Stimulus onset ramp time if an audio file is passed",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
+        ["--output-file", "-o"], Dict(
+            :help => "Output JLD2 file containing time series data of the simulation",
+            :arg_type => String,
+            :metavar => "FILENAME",
+            :required => true,
+        )
+    )
+
+    parsed_args = parse_args(arg_defs)
+
+    # Validate arguments
+    if isnothing(parsed_args[stimulus_params_file_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
+        argparse_error(arg_defs, "either --$stimulus_params_file_opt or --$stimulus_audio_file_opt must be given")
+    end
+    if !isnothing(parsed_args[stimulus_params_file_opt]) && !isnothing(parsed_args[stimulus_audio_file_opt])
+        argparse_error(arg_defs, "options --$stimulus_params_file_opt and --$stimulus_audio_file_opt are mutually exclusive")
+    end
+    if !isnothing(parsed_args[stimulus_audio_gain_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
+        argparse_error(arg_defs, "cannot specify --$stimulus_audio_gain_opt when not specifying --$stimulus_audio_file_opt")
+    end
+    if !isnothing(parsed_args[stimulus_audio_onset_ramp_time_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
+        argparse_error(arg_defs, "cannot specify --$stimulus_audio_onset_ramp_time_opt when not specifying --$stimulus_audio_file_opt")
+    end
+
+    if isnothing(parsed_args[stimulus_audio_gain_opt])
+        parsed_args[stimulus_audio_gain_opt] = 1.0
+    end
+    if isnothing(parsed_args[stimulus_audio_onset_ramp_time_opt])
+        parsed_args[stimulus_audio_onset_ramp_time_opt] = 0.0
+    end
+
+    return parsed_args
+end
 
 function run_simulation(
     differential_equation::Function,
@@ -34,24 +115,30 @@ function run_simulation(
     (solution, start_timestamp, duration_seconds)
 end
 
-function main()
-    # Read config filename from command line arguments.
-    if length(ARGS) < 1
-        println("Pass parameter YAML file as first argument.")
-        exit(1)
+function load_parameters_from_parsed_args(parsed_args::Dict)
+    if isnothing(parsed_args["stimulus-audio-file"])
+        load_parameters(
+            parsed_args["model-constants-file"], # TODO constants!
+            parsed_args["solver-params-file"],
+            parsed_args["stimulus-params-file"],
+        )
+    else
+        load_parameters(
+            parsed_args["model-constants-file"], # TODO constants!
+            parsed_args["solver-params-file"],
+            parsed_args["stimulus-audio-file"],
+            parsed_args["stimulus-audio-gain"],
+            parsed_args["stimulus-audio-onset-ramp-time"],
+        )
     end
-    parameters_filename = ARGS[1]
+end
 
-    # Read data output filename from command line arguments.
-    if length(ARGS) < 2
-        println("Pass data output filename as second argument.")
-        exit(1)
-    end
-    data_filename = ARGS[2]
+function main()
+    parsed_args = parse_commandline()
+    data_filename = parsed_args["output-file"] # TODO: Move name from string literal to constant.
 
     # Load parameters from config file.
-    println("Loading parameters from config file: $parameters_filename")
-    (; ctl_constants, stimulus, solver_params, metadata) = load_parameters(parameters_filename)
+    (; ctl_constants, stimulus, solver_params, metadata) = load_parameters_from_parsed_args(parsed_args)
     model_params = makeCochleaModelParams(
         ctl_constants,
         stimulus,

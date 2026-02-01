@@ -20,6 +20,43 @@ function onset_ramp(t::Float64, onset_ramp_time::Float64)
     end
 end
 
+function load_stimulus_audio_file(
+    filename::String,
+    gain::Float64,
+    onset_ramp_time::Float64,
+)
+    println("Loading stimulus from audio file: $filename")
+    y, fs::Float64 = wavread(filename)
+
+    n_channels = size(y, 2)
+    if n_channels > 1
+        println("Audio file has $n_channels channels. Using first channel only.")
+    end
+
+    y_vector_gained = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
+    println("Applied gain of $gain to audio signal.")
+
+    duration = length(y_vector_gained) / fs
+    println("Audio file sample rate: $fs Hz, duration: $duration seconds")
+
+    t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
+
+    println("Applying onset ramp time of $onset_ramp_time seconds")
+    onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
+    y_vector_gained_windowed = y_vector_gained[:, 1] .* onset_ramp_values
+
+    t_audio_zero_padded = [t_audio[1] - 1/fs; t_audio; t_audio[end] + 1/fs]
+    y_vector_gained_windowed_zero_padded = [0.0; y_vector_gained_windowed; 0.0]
+    interpolator = CubicSpline(
+        y_vector_gained_windowed_zero_padded,
+        t_audio_zero_padded,
+        cache_parameters=true,
+        extrapolation=ExtrapolationType.Constant
+    )
+
+    (t::Float64) -> interpolator(t)
+end
+
 """
     load_stimulus(stimulus)
 
@@ -52,36 +89,7 @@ function load_stimulus(stimulus_dict::Dict)
         filename = stimulus_dict["filename"]
         gain = get(stimulus_dict, "gain", 1.0)
         onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
-
-        println("Loading stimulus from audio file: $filename")
-        y, fs::Float64 = wavread(filename)
-
-        n_channels = size(y, 2)
-        if n_channels > 1
-            println("Audio file has $n_channels channels. Using first channel only.")
-        end
-
-        y_vector_gained = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
-        println("Applied gain of $gain to audio signal.")
-
-        duration = length(y_vector_gained) / fs
-        println("Audio file sample rate: $fs Hz, duration: $duration seconds")
-
-        t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
-
-        println("Applying onset ramp time of $onset_ramp_time seconds")
-        onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
-        y_vector_gained_windowed = y_vector_gained[:, 1] .* onset_ramp_values
-
-        t_audio_zero_padded = [t_audio[1] - 1/fs; t_audio; t_audio[end] + 1/fs]
-        y_vector_gained_windowed_zero_padded = [0.0; y_vector_gained_windowed; 0.0]
-        interpolator = CubicSpline(
-            y_vector_gained_windowed_zero_padded,
-            t_audio_zero_padded,
-            cache_parameters=true,
-            extrapolation=ExtrapolationType.Constant
-        )
-        stimulus = (t::Float64) -> interpolator(t)
+        stimulus = load_stimulus_audio_file(filename, gain, onset_ramp_time)
     else
         error("Unknown stimulus type: $(stimulus_dict["type"])")
     end
@@ -89,11 +97,91 @@ function load_stimulus(stimulus_dict::Dict)
     stimulus
 end
 
+function load_model_constants(model_constants_filename::String) :: NamedTuple
+    println("Loading model constants from: $model_constants_filename")
+    model_constants_dict = YAML.load_file(model_constants_filename)
+
+    # Read the cochlea transmission line constants.
+    ctl_constants = CochleaTransmissionLineConstants(
+        ;
+        (Pair(Symbol(k), v) for (k, v) in model_constants_dict)...
+    )
+
+    (; ctl_constants=ctl_constants, model_constants_dict=model_constants_dict)
+end
+
 @kwdef struct SolverParams
     u0_value::Union{Vector{Float64}, Nothing}
     previous_solution_filename::Union{String, Nothing}
     tspan::Vector{Float64}
     saveat::Union{Float64, Vector{Any}}
+end
+
+function load_solver_params(solver_params_filename::String) :: NamedTuple
+    println("Loading solver parameters from: $solver_params_filename")
+    solver_params_dict = YAML.load_file(solver_params_filename)
+
+    solver_params = SolverParams(
+        # Read initial state if given.
+        u0_value = get(solver_params_dict, "u0_value", nothing),
+
+        # Read previous solution if given.
+        previous_solution_filename = get(solver_params_dict, "previous_solution_filename", nothing),
+
+        # Read the time span of simulation.
+        tspan = solver_params_dict["tspan"],
+
+        # Read sample rate to be used by the solver. If not found, an empty array is used to not sample.
+        saveat = get(solver_params_dict, "saveat", []),
+    )
+
+    (; solver_params=solver_params, solver_params_dict=solver_params_dict)
+end
+
+function make_metadata(
+    model_constants_filename::String,
+    solver_params_filename::String,
+    stimulus_params_filename::Union{String, Nothing},
+    model_constants_dict::Dict,
+    stimulus_dict::Dict,
+    solver_params_section::Dict,
+)
+    Dict(
+        "model_constants_filename" => model_constants_filename,
+        "solver_params_filename" => solver_params_filename,
+        "stimulus_params_filename" => stimulus_params_filename,
+        "model_constants" => model_constants_dict,
+        "stimulus" => stimulus_dict,
+        "solver_params" => solver_params_section,
+    )
+end
+
+function make_parameters_tuple(
+    model_constants_filename::String,
+    solver_params_filename::String,
+    stimulus_params_filename::Union{String, Nothing},
+    model_constants_dict::Dict,
+    stimulus_dict::Dict,
+    solver_params_section::Dict,
+    ctl_constants::CochleaTransmissionLineConstants,
+    stimulus::Function,
+    solver_params::SolverParams,
+)
+    metadata = make_metadata(
+        model_constants_filename,
+        solver_params_filename,
+        stimulus_params_filename,
+        model_constants_dict,
+        stimulus_dict,
+        solver_params_section,
+    )
+
+    (
+        ctl_constants=ctl_constants,
+        stimulus=stimulus,
+        solver_params=solver_params,
+        metadata=metadata,
+    )
 end
 
 """
@@ -107,58 +195,58 @@ Returns a named tuple with fields:
 - `solver_params`: solver configuration
 - `metadata`: metadata containing information about the loaded parameters and simulation info
 """
-function load_parameters(parameters_filename::String)
-    parameters = YAML.load_file(parameters_filename)
+function load_parameters(
+    model_constants_filename::String,
+    solver_params_filename::String,
+    stimulus_params_filename::String,
+)
+    # Load parameter files.
+    (; ctl_constants, model_constants_dict) = load_model_constants(model_constants_filename)
+    (; solver_params, solver_params_dict) = load_solver_params(solver_params_filename)
+    stimulus_dict = YAML.load_file(stimulus_params_filename)
+    stimulus = load_stimulus(stimulus_dict)
 
-    # Load model constants from separate file
-    if !haskey(parameters, "model_constants_filename")
-        println("Error: model_constants_filename must be specified in the config file.")
-        exit(1)
-    end
-    model_constants_filename = parameters["model_constants_filename"]
-    println("Loading model constants from: $model_constants_filename")
-    model_constants_dict = YAML.load_file(model_constants_filename)
-
-    # Extract sections of config file.
-    stimulus_section = parameters["stimulus"]
-    solver_params_section = parameters["solver_params"]
-
-    # Read the cochlea transmission line constants.
-    ctl_constants = CochleaTransmissionLineConstants(
-        ;
-        (Pair(Symbol(k), v) for (k, v) in model_constants_dict)...
+    make_parameters_tuple(
+        model_constants_filename,
+        solver_params_filename,
+        stimulus_params_filename,
+        model_constants_dict,
+        stimulus_dict,
+        solver_params_dict,
+        ctl_constants,
+        stimulus,
+        solver_params,
     )
+end
 
-    # Read the stimulus function type.
-    stimulus = load_stimulus(stimulus_section)
-
-    solver_params = SolverParams(
-        # Read initial state if given.
-        u0_value = get(solver_params_section, "u0_value", nothing),
-
-        # Read previous solution if given.
-        previous_solution_filename = get(solver_params_section, "previous_solution_filename", nothing),
-
-        # Read the time span of simulation.
-        tspan = solver_params_section["tspan"],
-
-        # Read sample rate to be used by the solver. If not found, an empty array is used to not sample.
-        saveat = get(solver_params_section, "saveat", []),
+function load_parameters(
+    model_constants_filename::String,
+    solver_params_filename::String,
+    stimulus_audio_file::String,
+    stimulus_audio_gain::Float64,
+    stimulus_audio_onset_ramp_time::Float64,
+)
+    # Load parameter files.
+    (; ctl_constants, model_constants_dict) = load_model_constants(model_constants_filename)
+    (; solver_params, solver_params_dict) = load_solver_params(solver_params_filename)
+    stimulus_dict = Dict(
+        "type" => "audio",
+        "filename" => stimulus_audio_file,
+        "gain" => stimulus_audio_gain,
+        "onset_ramp_time" => stimulus_audio_onset_ramp_time,
     )
+    stimulus = load_stimulus(stimulus_dict)
 
-    metadata = Dict(
-        "parameters_filename" => parameters_filename,
-        "model_constants_filename" => model_constants_filename,
-        "model_constants" => model_constants_dict,
-        "stimulus" => stimulus_section,
-        "solver_params" => solver_params_section,
-    )
-
-    (
-        ctl_constants=ctl_constants,
-        stimulus=stimulus,
-        solver_params=solver_params,
-        metadata=metadata,
+    make_parameters_tuple(
+        model_constants_filename,
+        solver_params_filename,
+        nothing,
+        model_constants_dict,
+        stimulus_dict,
+        solver_params_dict,
+        ctl_constants,
+        stimulus,
+        solver_params,
     )
 end
 

@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Sofus Dawids <s194047@dtu.dk>"]
 
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 DelayDiffEq = "bcd4f6db-9728-5f36-b5f7-82caef46ccdb"
@@ -17,6 +18,7 @@ WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+ArgParse = "1.2.0"
 DSP = "0.8.4"
 DataInterpolations = "8.9.0"
 DelayDiffEq = "5.62.0"

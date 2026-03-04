@@ -11,8 +11,9 @@ export makeCochleaModelParams
 export cochlea_transmission_line!
 
 include("data_analysis.jl")
-export get_solution_samples
+export interpolate_signal
 export instantaneous_rotation
+export mean_rotation
 
 include("util.jl")
 export load_stimulus

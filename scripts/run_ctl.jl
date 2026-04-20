@@ -20,13 +20,13 @@ function parse_commandline()::Dict
 
     arg_defs = ArgParseSettings()
     add_arg_table(arg_defs,
-        "--model-constants-file", Dict(
+        ["--model-constants-file", "-m"], Dict(
             :help => "YAML file containing model constants",
             :arg_type => String,
             :metavar => "FILENAME",
             :required => true,
         ),
-        "--solver-params-file", Dict(
+        ["--solver-params-file", "-s"], Dict(
             :help => "YAML file containing solver parameters",
             :arg_type => String,
             :metavar => "FILENAME",

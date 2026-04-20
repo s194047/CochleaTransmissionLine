@@ -12,21 +12,29 @@ function argparse_error(arg_defs::ArgParseSettings, message::String)
     exit(1)
 end
 
-function parse_commandline()::Dict
-    stimulus_params_file_opt = "stimulus-params-file"
-    stimulus_audio_file_opt = "stimulus-audio-file"
-    stimulus_audio_gain_opt = "stimulus-audio-gain"
-    stimulus_audio_onset_ramp_time_opt = "stimulus-audio-onset-ramp-time"
+model_constants_file_opt = "model-constants-file"
+solver_params_file_opt = "solver-params-file"
 
+stimulus_params_file_opt = "stimulus-params-file"
+stimulus_audio_file_opt = "stimulus-audio-file"
+stimulus_audio_gain_opt = "stimulus-audio-gain"
+stimulus_audio_spl_target_opt = "stimulus-audio-spl-target"
+stimulus_audio_spl_reference_opt = "stimulus-audio-spl-reference"
+stimulus_audio_onset_ramp_time_opt = "stimulus-audio-onset-ramp-time"
+
+only_save_last_interval_opt = "only-save-last-interval"
+output_file_opt = "output-file"
+
+function parse_commandline()::Dict
     arg_defs = ArgParseSettings()
     add_arg_table(arg_defs,
-        "--model-constants-file", Dict(
+        ["--$model_constants_file_opt", "-m"], Dict(
             :help => "YAML file containing model constants",
             :arg_type => String,
             :metavar => "FILENAME",
             :required => true,
         ),
-        "--solver-params-file", Dict(
+        ["--$solver_params_file_opt", "-s"], Dict(
             :help => "YAML file containing solver parameters",
             :arg_type => String,
             :metavar => "FILENAME",
@@ -47,12 +55,26 @@ function parse_commandline()::Dict
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
+        "--$stimulus_audio_spl_target_opt", Dict(
+            :help => "Target SPL level for stimulus audio",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
+        "--$stimulus_audio_spl_reference_opt", Dict(
+            :help => "Reference amplitude for 0 dB SPL of stimulus audio",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
         "--$stimulus_audio_onset_ramp_time_opt", Dict(
             :help => "Stimulus onset ramp time if an audio file is passed",
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
-        ["--output-file", "-o"], Dict(
+        "--$only_save_last_interval_opt", Dict(
+            :help => "Save only the last interval of the simulation, e.g. for generating initial conditions",
+            :action => :store_true,
+        ),
+        ["--$output_file_opt", "-o"], Dict(
             :help => "Output JLD2 file containing time series data of the simulation",
             :arg_type => String,
             :metavar => "FILENAME",
@@ -72,13 +94,19 @@ function parse_commandline()::Dict
     if !isnothing(parsed_args[stimulus_audio_gain_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
         argparse_error(arg_defs, "cannot specify --$stimulus_audio_gain_opt when not specifying --$stimulus_audio_file_opt")
     end
+    if !isnothing(parsed_args[stimulus_audio_spl_target_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
+        argparse_error(arg_defs, "cannot specify --$stimulus_audio_spl_target_opt when not specifying --$stimulus_audio_file_opt")
+    end
+    if !isnothing(parsed_args[stimulus_audio_gain_opt]) && !isnothing(parsed_args[stimulus_audio_spl_target_opt])
+        argparse_error(arg_defs, "options --$stimulus_audio_gain_opt and --$stimulus_audio_spl_target_opt are mutually exclusive")
+    end
+    if !isnothing(parsed_args[stimulus_audio_spl_target_opt]) && isnothing(parsed_args[stimulus_audio_spl_reference_opt])
+        argparse_error(arg_defs, "must specify --$stimulus_audio_spl_reference_opt when specifying --$stimulus_audio_spl_target_opt")
+    end
     if !isnothing(parsed_args[stimulus_audio_onset_ramp_time_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
         argparse_error(arg_defs, "cannot specify --$stimulus_audio_onset_ramp_time_opt when not specifying --$stimulus_audio_file_opt")
     end
 
-    if isnothing(parsed_args[stimulus_audio_gain_opt])
-        parsed_args[stimulus_audio_gain_opt] = 1.0
-    end
     if isnothing(parsed_args[stimulus_audio_onset_ramp_time_opt])
         parsed_args[stimulus_audio_onset_ramp_time_opt] = 0.0
     end
@@ -116,19 +144,26 @@ function run_simulation(
 end
 
 function load_parameters_from_parsed_args(parsed_args::Dict)
-    if isnothing(parsed_args["stimulus-audio-file"])
+    if isnothing(parsed_args[stimulus_audio_file_opt])
         load_parameters(
-            parsed_args["model-constants-file"], # TODO constants!
-            parsed_args["solver-params-file"],
-            parsed_args["stimulus-params-file"],
+            parsed_args[model_constants_file_opt],
+            parsed_args[solver_params_file_opt],
+            parsed_args[stimulus_params_file_opt],
         )
     else
+        stimulus_dict = Dict(
+            "type" => "audio",
+            "filename" => parsed_args[stimulus_audio_file_opt],
+            "gain" => parsed_args[stimulus_audio_gain_opt],
+            "spl_target" => parsed_args[stimulus_audio_spl_target_opt],
+            "spl_reference" => parsed_args[stimulus_audio_spl_reference_opt],
+            "onset_ramp_time" => parsed_args[stimulus_audio_onset_ramp_time_opt],
+        )
+
         load_parameters(
-            parsed_args["model-constants-file"], # TODO constants!
-            parsed_args["solver-params-file"],
-            parsed_args["stimulus-audio-file"],
-            parsed_args["stimulus-audio-gain"],
-            parsed_args["stimulus-audio-onset-ramp-time"],
+            parsed_args[model_constants_file_opt],
+            parsed_args[solver_params_file_opt],
+            stimulus_dict
         )
     end
 end
@@ -182,15 +217,20 @@ function main()
             solver_params,
         )
 
-        # Append the results to the overall solution.
-        if isempty(t) || solution.t[1] > t[end]
-            # This is the first segment or (not expected) the new segment does not start exactly where the previous ended.
-            append!(t, solution.t)
-            append!(u, solution.u)
+        if !parsed_args[only_save_last_interval_opt] || interval == intervals[end]
+            # Append the results to the overall solution.
+            println("Appending results to overall solution...")
+            if isempty(t) || solution.t[1] > t[end]
+                # This is the first segment or (not expected) the new segment does not start exactly where the previous ended.
+                append!(t, solution.t)
+                append!(u, solution.u)
+            else
+                # Avoid duplicating the initial time point of the new segment.
+                append!(t, solution.t[2:end])
+                append!(u, solution.u[2:end])
+            end
         else
-            # Avoid duplicating the initial time point of the new segment.
-            append!(t, solution.t[2:end])
-            append!(u, solution.u[2:end])
+            println("Only saving last interval. Skipped appending results for this interval.")
         end
 
         # Clear the reference to the previous solution to release the memory between iterations.

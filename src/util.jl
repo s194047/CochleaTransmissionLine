@@ -22,9 +22,12 @@ end
 
 function load_stimulus_audio_file(
     filename::String,
-    gain::Float64,
+    gain::Union{Float64, Nothing},
+    spl_target::Union{Float64, Nothing},
+    spl_reference::Union{Float64, Nothing},
     onset_ramp_time::Float64,
 )
+    # Read WAV file and make sure the signal is mono.
     println("Loading stimulus from audio file: $filename")
     y, fs::Float64 = wavread(filename)
 
@@ -33,22 +36,39 @@ function load_stimulus_audio_file(
         println("Audio file has $n_channels channels. Using first channel only.")
     end
 
-    y_vector_gained = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
+    if !isnothing(gain)
+        println("Specified gain: $gain")
+    elseif !isnothing(spl_target) # The argument validation makes sure spl_reference is given as well
+        println("SPL target and reference specified.")
+        println("Target: $spl_target dB SPL, Reference: $spl_reference")
+        y_rms = rms(y[:, 1]) # Use first channel if stereo
+        println("Calculated RMS of audio signal: $y_rms")
+        target_rms = spl_reference * 10.0^(spl_target / 20.0) / sqrt(2) # Convert from SPL to RMS assuming sine was used for calibration
+        println("Calculated target RMS for desired SPL: $target_rms")
+        gain = target_rms / y_rms
+        println("Calculated gain: $gain")
+    else
+        println("No gain or SPL target specified. Defaulting to unity gain")
+        gain = 1.0
+    end
+
+    # Apply gain to the audio signal.
+    y_vector_scaled = y[:, 1] .* gain # Make sure y is a vector (take first channel if stereo)
     println("Applied gain of $gain to audio signal.")
 
-    duration = length(y_vector_gained) / fs
+    duration = length(y_vector_scaled) / fs
     println("Audio file sample rate: $fs Hz, duration: $duration seconds")
 
-    t_audio = LinRange(0, duration - 1/fs, length(y_vector_gained))
+    t_audio = LinRange(0, duration - 1/fs, length(y_vector_scaled))
 
     println("Applying onset ramp time of $onset_ramp_time seconds")
     onset_ramp_values = onset_ramp.(t_audio, onset_ramp_time)
-    y_vector_gained_windowed = y_vector_gained[:, 1] .* onset_ramp_values
+    y_vector_scaled_windowed = y_vector_scaled[:, 1] .* onset_ramp_values
 
     t_audio_zero_padded = [t_audio[1] - 1/fs; t_audio; t_audio[end] + 1/fs]
-    y_vector_gained_windowed_zero_padded = [0.0; y_vector_gained_windowed; 0.0]
+    y_vector_scaled_windowed_zero_padded = [0.0; y_vector_scaled_windowed; 0.0]
     interpolator = CubicSpline(
-        y_vector_gained_windowed_zero_padded,
+        y_vector_scaled_windowed_zero_padded,
         t_audio_zero_padded,
         cache_parameters=true,
         extrapolation=ExtrapolationType.Constant
@@ -87,9 +107,17 @@ function load_stimulus(stimulus_dict::Dict)
 
     elseif stimulus_dict["type"] == "audio"
         filename = stimulus_dict["filename"]
-        gain = get(stimulus_dict, "gain", 1.0)
-        onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
-        stimulus = load_stimulus_audio_file(filename, gain, onset_ramp_time)
+        gain = stimulus_dict["gain"]
+        spl_target = stimulus_dict["spl_target"]
+        spl_reference = stimulus_dict["spl_reference"]
+        onset_ramp_time = stimulus_dict["onset_ramp_time"]
+        stimulus = load_stimulus_audio_file(
+            filename,
+            gain,
+            spl_target,
+            spl_reference,
+            onset_ramp_time,
+        )
     else
         error("Unknown stimulus type: $(stimulus_dict["type"])")
     end
@@ -222,19 +250,11 @@ end
 function load_parameters(
     model_constants_filename::String,
     solver_params_filename::String,
-    stimulus_audio_file::String,
-    stimulus_audio_gain::Float64,
-    stimulus_audio_onset_ramp_time::Float64,
+    stimulus_dict::Dict,
 )
     # Load parameter files.
     (; ctl_constants, model_constants_dict) = load_model_constants(model_constants_filename)
     (; solver_params, solver_params_dict) = load_solver_params(solver_params_filename)
-    stimulus_dict = Dict(
-        "type" => "audio",
-        "filename" => stimulus_audio_file,
-        "gain" => stimulus_audio_gain,
-        "onset_ramp_time" => stimulus_audio_onset_ramp_time,
-    )
     stimulus = load_stimulus(stimulus_dict)
 
     make_parameters_tuple(

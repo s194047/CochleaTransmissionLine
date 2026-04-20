@@ -1,0 +1,3 @@
+# Zero stimulus parameters, e.g. to generate initial conditions.
+
+type: "zero"

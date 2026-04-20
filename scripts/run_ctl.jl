@@ -52,6 +52,10 @@ function parse_commandline()::Dict
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
+        "--only-save-last-interval", Dict(
+            :help => "Save only the last interval of the simulation, e.g. for generating initial conditions",
+            :action => :store_true,
+        ),
         ["--output-file", "-o"], Dict(
             :help => "Output JLD2 file containing time series data of the simulation",
             :arg_type => String,
@@ -182,7 +186,9 @@ function main()
             solver_params,
         )
 
+        if !parsed_args["only-save-last-interval"] || interval == intervals[end]
         # Append the results to the overall solution.
+            println("Appending results to overall solution...")
         if isempty(t) || solution.t[1] > t[end]
             # This is the first segment or (not expected) the new segment does not start exactly where the previous ended.
             append!(t, solution.t)
@@ -191,6 +197,9 @@ function main()
             # Avoid duplicating the initial time point of the new segment.
             append!(t, solution.t[2:end])
             append!(u, solution.u[2:end])
+            end
+        else
+            println("Only saving last interval. Skipped appending results for this interval.")
         end
 
         # Clear the reference to the previous solution to release the memory between iterations.

@@ -27,5 +27,8 @@
 #BSUB -o Output_%J.out
 #BSUB -e Output_%J.err
 
+# Load modules needed by the application
+module load julia/1.12.6
+
 # here follow the commands you want to execute with input.in as the input file
 shell_scripts/run_ctl_help.sh

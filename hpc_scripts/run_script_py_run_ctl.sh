@@ -40,8 +40,12 @@ export RUN_SCRIPT_PY=~/MSc_project/run_script/run_script.py
 export INPUT_DIR=~/MSc_project/speech_commands_v0.01
 export OUTPUT_DIR=~/MSc_project/speech_commands_v0.01_processed
 
-# Set the command to be executed by run_script.py
-export RUN_CTL_COMMAND="julia --project=. scripts/run_ctl.jl --model-constants-file model_constants.yaml --solver-params-file params/solver_params/solver_params_1s.yaml --stimulus-params-file params/stimulus_params/zero_stimulus.yaml --output-file data/zero_stimulus_1s.jld2"
-
 # Run the run_script.py program
-$RUN_SCRIPT_PY -i $INPUT_DIR -o $OUTPUT_DIR -O jld2 -p 4 -n $RUN_CTL_COMMAND
+$RUN_SCRIPT_PY -i $INPUT_DIR -o $OUTPUT_DIR -O jld2 -p 16 -n -- \
+    julia --project=. scripts/run_ctl.jl \
+    --model-constants-file model_constants.yaml \
+    --solver-params-file params/solver_params/solver_params_1s.yaml \
+    --stimulus-audio-file {i} \
+    --stimulus-audio-spl-target 60.0 \
+    --stimulus-audio-spl-reference 0.001 \
+    --output-file {o}

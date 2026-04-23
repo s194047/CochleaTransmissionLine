@@ -41,7 +41,7 @@ export INPUT_DIR=~/MSc_project/speech_commands_v0.01
 export OUTPUT_DIR=~/MSc_project/speech_commands_v0.01_processed
 
 # Run the run_script.py program
-$RUN_SCRIPT_PY -i $INPUT_DIR -o $OUTPUT_DIR -O jld2 -p 16 -n -- \
+$RUN_SCRIPT_PY -i $INPUT_DIR -o $OUTPUT_DIR -O jld2 -p 16 -- \
     julia --project=. scripts/run_ctl.jl \
     --model-constants-file model_constants.yaml \
     --solver-params-file params/solver_params/solver_params_1s.yaml \

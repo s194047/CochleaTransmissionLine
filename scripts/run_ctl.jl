@@ -135,10 +135,10 @@ function run_simulation(
     algorithm = MethodOfSteps(Tsit5())
 
     # Run the simulation and log the time taken.
-    println("Starting simulation...")
+    println(stderr, "Starting simulation...")
     start_timestamp = now(localzone())
     duration_seconds = @elapsed solution = solve(problem, saveat=solver_params.saveat, algorithm)
-    println("Simulation completed in $(duration_seconds) seconds.")
+    println(stderr, "Simulation completed in $(duration_seconds) seconds.")
 
     (solution, start_timestamp, duration_seconds)
 end
@@ -185,8 +185,8 @@ function main()
     # Determine the maximum run time based on the maximum delay in the system.
     max_delay = maximum(model_params.ctl_params.τ_values)
     max_run_time = ceil(max_delay, digits=1)
-    println("Maximum delay in system: $max_delay seconds.")
-    println("Maximum run time per segment: $max_run_time seconds.")
+    println(stderr, "Maximum delay in system: $max_delay seconds.")
+    println(stderr, "Maximum run time per segment: $max_run_time seconds.")
 
     # Divide the timespan into segments to avoid excessive memory usage.
     intervals = let
@@ -195,7 +195,7 @@ function main()
         edges[end] < t1 && push!(edges, t1);
         [(edges[i], edges[i+1]) for i in 1:length(edges)-1]
     end
-    println("Divided total timespan into $(length(intervals)) intervals of $max_run_time seconds each.")
+    println(stderr, "Divided total timespan into $(length(intervals)) intervals of $max_run_time seconds each.")
 
     # Initialize empty arrays for solution t and u and for simulation info metadata.
     # TODO: Consider zipping t and u to named tuples.
@@ -206,7 +206,7 @@ function main()
 
     # Run the simulation in segments.
     for interval in intervals
-        println("Running simulation for interval: $interval")
+        println(stderr, "Running simulation for interval: $interval")
         # Run the simulation for the current interval.
         solution, start_timestamp, duration_seconds = run_simulation(
             cochlea_transmission_line!,
@@ -219,7 +219,7 @@ function main()
 
         if !parsed_args[only_save_last_interval_opt] || interval == intervals[end]
             # Append the results to the overall solution.
-            println("Appending results to overall solution...")
+            println(stderr, "Appending results to overall solution...")
             if isempty(t) || solution.t[1] > t[end]
                 # This is the first segment or (not expected) the new segment does not start exactly where the previous ended.
                 append!(t, solution.t)
@@ -230,14 +230,14 @@ function main()
                 append!(u, solution.u[2:end])
             end
         else
-            println("Only saving last interval. Skipped appending results for this interval.")
+            println(stderr, "Only saving last interval. Skipped appending results for this interval.")
         end
 
         # Clear the reference to the previous solution to release the memory between iterations.
         forget_history_function(u_history)
 
         # Update initial conditions and history function for the next interval.
-        println("Updating initial conditions for next interval.")
+        println(stderr, "Updating initial conditions for next interval.")
         u0 = solution.u[end]
         u_history = UHistory(solution)
 
@@ -247,7 +247,7 @@ function main()
     end
 
     # Save the solution to disk.
-    println("Saving solution to $data_filename...")
+    println(stderr, "Saving solution to $data_filename...")
     mkpath(dirname(data_filename))
     jldsave(
         "$data_filename";
@@ -255,7 +255,7 @@ function main()
         u,
         metadata,
     )
-    println("Solution saved successfully.")
+    println(stderr, "Solution saved successfully.")
 end
 
 # Only run if script is executed directly.

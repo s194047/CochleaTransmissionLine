@@ -28,9 +28,11 @@
 #BSUB -e Output_%J.err
 
 ### Get environment variables
-#BSUB -env "SUB_DIR"
+#BSUB -env "SUB_DIR,TOTAL_FILES,PARALLELISM"
 # Check that variables are defined
-: "${SUB_DIR:?ERROR: Must specify SUB_DIR to process}"
+: "${SUB_DIR:?ERROR: Must specify subdirectory to process}"
+: "${TOTAL_FILES:?ERROR: Must specify total number of files to process}"
+: "${PARALLELISM:?ERROR: Must specify number of parallel processes}"
 
 # Load modules needed by the application
 module load python3/3.14.2
@@ -53,7 +55,7 @@ LOG_DIR=/work3/s194047/speech_commands_v0.01_up_down_yes_no/output/log/$SUB_DIR
 
 # Run the run_script.py program
 $RUN_SCRIPT_PY -i $INPUT_DIR -g "*.wav" -o $OUTPUT_DIR -O jld2 -L $LOG_DIR \
-    -S spl_target_${SPL_TARGET}dB_ref_${SPL_REFERENCE} -p 16 -T 4 -- \
+    -S spl_target_${SPL_TARGET}dB_ref_${SPL_REFERENCE} -p $PARALLELISM -T $TOTAL_FILES -- \
     julia --project=. scripts/run_ctl.jl \
     --model-constants-file model_constants.yaml \
     --solver-params-file params/solver_params/solver_params_1s.yaml \

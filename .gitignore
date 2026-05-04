@@ -1,4 +1,9 @@
+.DS_Store
+
 data
 figures
 .jld2
-.DS_Store
+
+# Output files from HPC runs
+*.out
+*.err

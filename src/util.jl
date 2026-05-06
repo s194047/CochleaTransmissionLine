@@ -92,8 +92,18 @@ function load_stimulus(stimulus_dict::Dict)
 
     elseif stimulus_dict["type"] == "sine"
         frequency = stimulus_dict["frequency"]
-        amplitude = stimulus_dict["amplitude"]
+        amplitude = get(stimulus_dict, "amplitude", nothing)
+        spl_target = get(stimulus_dict, "spl_target", nothing)
+        spl_reference = get(stimulus_dict, "spl_reference", nothing)
         onset_ramp_time = get(stimulus_dict, "onset_ramp_time", 0.0)
+
+        if isnothing(amplitude)
+            if isnothing(spl_target) || isnothing(spl_reference)
+                error("Must specify either amplitude or SPL target and reference.")
+            end
+            println(stderr, "Specified SPL target: $spl_target and reference: $spl_reference")
+            amplitude = spl_reference * 10^(spl_target / 20)
+        end
 
         println(stderr, "Sinusoidal stimulus with frequency: $frequency and amplitude: $amplitude")
 

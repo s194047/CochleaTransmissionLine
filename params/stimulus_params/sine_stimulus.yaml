@@ -1,0 +1,6 @@
+# Sine stimulus parameters
+
+type: "sine"
+frequency: 1000
+spl_target: 60
+spl_reference: 0.001

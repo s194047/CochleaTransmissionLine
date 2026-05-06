@@ -12,7 +12,7 @@ using Statistics
 Takes a matrix where the first axis is the time axis and the second axis is the oscillator index.
 One oscillator is two columns representing displacement `y` and velocity `v`, respectively.
 
-Returns a
+Returns the RMS value of the displacement `y` for each oscillator as a vector.
 """
 function oscillator_rms(u::Matrix{Float64})::Vector{Float64}
     # y, v = @views u[:, 1:2:end], u[:, 2:2:end]

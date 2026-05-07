@@ -13,6 +13,9 @@ export cochlea_transmission_line!
 include("data_analysis.jl")
 export get_solution_samples
 export instantaneous_rotation
+export oscillator_rms
+export oscillator_rotation_frequency
+export oscillator_winding_frequency
 
 include("util.jl")
 export load_stimulus

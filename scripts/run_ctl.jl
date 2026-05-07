@@ -16,11 +16,16 @@ model_constants_file_opt = "model-constants-file"
 solver_params_file_opt = "solver-params-file"
 
 stimulus_params_file_opt = "stimulus-params-file"
+
+stimulus_zero_opt = "stimulus-zero"
+stimulus_sine_frequency_opt = "stimulus-sine-frequency"
+stimulus_sine_amplitude_opt = "stimulus-sine-amplitude"
 stimulus_audio_file_opt = "stimulus-audio-file"
 stimulus_audio_gain_opt = "stimulus-audio-gain"
-stimulus_audio_spl_target_opt = "stimulus-audio-spl-target"
-stimulus_audio_spl_reference_opt = "stimulus-audio-spl-reference"
-stimulus_audio_onset_ramp_time_opt = "stimulus-audio-onset-ramp-time"
+
+stimulus_spl_target_opt = "stimulus-spl-target"
+stimulus_spl_reference_opt = "stimulus-spl-reference"
+stimulus_onset_ramp_time_opt = "stimulus-onset-ramp-time"
 
 only_save_last_interval_opt = "only-save-last-interval"
 output_file_opt = "output-file"
@@ -45,6 +50,20 @@ function parse_commandline()::Dict
             :arg_type => String,
             :metavar => "FILENAME",
         ),
+        "--$stimulus_zero_opt", Dict(
+            :help => "Zero stimulus (no signal)",
+            :action => :store_true,
+        ),
+        "--$stimulus_sine_frequency_opt", Dict(
+            :help => "Frequency for sine stimulus",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
+        "--$stimulus_sine_amplitude_opt", Dict(
+            :help => "Amplitude for sine stimulus",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
         "--$stimulus_audio_file_opt", Dict(
             :help => "WAV file containing stimulus audio",
             :arg_type => String,
@@ -55,18 +74,18 @@ function parse_commandline()::Dict
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
-        "--$stimulus_audio_spl_target_opt", Dict(
-            :help => "Target SPL level for stimulus audio",
+        "--$stimulus_spl_target_opt", Dict(
+            :help => "Target SPL level for stimulus",
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
-        "--$stimulus_audio_spl_reference_opt", Dict(
-            :help => "Reference amplitude for 0 dB SPL of stimulus audio",
+        "--$stimulus_spl_reference_opt", Dict(
+            :help => "Reference amplitude for 0 dB SPL of stimulus",
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
-        "--$stimulus_audio_onset_ramp_time_opt", Dict(
-            :help => "Stimulus onset ramp time if an audio file is passed",
+        "--$stimulus_onset_ramp_time_opt", Dict(
+            :help => "Stimulus onset ramp time",
             :arg_type => Float64,
             :metavar => "FLOAT",
         ),
@@ -85,30 +104,36 @@ function parse_commandline()::Dict
     parsed_args = parse_args(arg_defs)
 
     # Validate arguments
-    if isnothing(parsed_args[stimulus_params_file_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
-        argparse_error(arg_defs, "either --$stimulus_params_file_opt or --$stimulus_audio_file_opt must be given")
-    end
-    if !isnothing(parsed_args[stimulus_params_file_opt]) && !isnothing(parsed_args[stimulus_audio_file_opt])
-        argparse_error(arg_defs, "options --$stimulus_params_file_opt and --$stimulus_audio_file_opt are mutually exclusive")
+    stimulus_sources = [
+        (stimulus_params_file_opt, !isnothing(parsed_args[stimulus_params_file_opt])),
+        (stimulus_zero_opt, parsed_args[stimulus_zero_opt]),
+        (stimulus_sine_frequency_opt, !isnothing(parsed_args[stimulus_sine_frequency_opt])),
+        (stimulus_audio_file_opt, !isnothing(parsed_args[stimulus_audio_file_opt])),
+    ]
+    provided_sources = [name for (name, is_provided) in stimulus_sources if is_provided]
+    if length(provided_sources) != 1
+        argparse_error(arg_defs, "exactly one of --$stimulus_params_file_opt, --$stimulus_zero_opt, --$stimulus_sine_frequency_opt, or --$stimulus_audio_file_opt must be given")
     end
     if !isnothing(parsed_args[stimulus_audio_gain_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
         argparse_error(arg_defs, "cannot specify --$stimulus_audio_gain_opt when not specifying --$stimulus_audio_file_opt")
     end
-    if !isnothing(parsed_args[stimulus_audio_spl_target_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
-        argparse_error(arg_defs, "cannot specify --$stimulus_audio_spl_target_opt when not specifying --$stimulus_audio_file_opt")
+    if !isnothing(parsed_args[stimulus_audio_gain_opt]) && !isnothing(parsed_args[stimulus_spl_target_opt])
+        argparse_error(arg_defs, "options --$stimulus_audio_gain_opt and --$stimulus_spl_target_opt are mutually exclusive")
     end
-    if !isnothing(parsed_args[stimulus_audio_gain_opt]) && !isnothing(parsed_args[stimulus_audio_spl_target_opt])
-        argparse_error(arg_defs, "options --$stimulus_audio_gain_opt and --$stimulus_audio_spl_target_opt are mutually exclusive")
+    if !isnothing(parsed_args[stimulus_spl_target_opt]) && isnothing(parsed_args[stimulus_spl_reference_opt])
+        argparse_error(arg_defs, "must specify --$stimulus_spl_reference_opt when specifying --$stimulus_spl_target_opt")
     end
-    if !isnothing(parsed_args[stimulus_audio_spl_target_opt]) && isnothing(parsed_args[stimulus_audio_spl_reference_opt])
-        argparse_error(arg_defs, "must specify --$stimulus_audio_spl_reference_opt when specifying --$stimulus_audio_spl_target_opt")
-    end
-    if !isnothing(parsed_args[stimulus_audio_onset_ramp_time_opt]) && isnothing(parsed_args[stimulus_audio_file_opt])
-        argparse_error(arg_defs, "cannot specify --$stimulus_audio_onset_ramp_time_opt when not specifying --$stimulus_audio_file_opt")
+    if !isnothing(parsed_args[stimulus_sine_frequency_opt])
+        if isnothing(parsed_args[stimulus_sine_amplitude_opt]) && isnothing(parsed_args[stimulus_spl_target_opt])
+            argparse_error(arg_defs, "must specify either --$stimulus_sine_amplitude_opt or --$stimulus_spl_target_opt when specifying --$stimulus_sine_frequency_opt")
+        end
+        if !isnothing(parsed_args[stimulus_sine_amplitude_opt]) && !isnothing(parsed_args[stimulus_spl_target_opt])
+            argparse_error(arg_defs, "options --$stimulus_sine_amplitude_opt and --$stimulus_spl_target_opt are mutually exclusive")
+        end
     end
 
-    if isnothing(parsed_args[stimulus_audio_onset_ramp_time_opt])
-        parsed_args[stimulus_audio_onset_ramp_time_opt] = 0.0
+    if isnothing(parsed_args[stimulus_onset_ramp_time_opt])
+        parsed_args[stimulus_onset_ramp_time_opt] = 0.0
     end
 
     return parsed_args
@@ -144,26 +169,49 @@ function run_simulation(
 end
 
 function load_parameters_from_parsed_args(parsed_args::Dict)
-    if isnothing(parsed_args[stimulus_audio_file_opt])
+    if parsed_args[stimulus_zero_opt]
+        stimulus_dict = Dict("type" => "zero")
+
         load_parameters(
             parsed_args[model_constants_file_opt],
             parsed_args[solver_params_file_opt],
-            parsed_args[stimulus_params_file_opt],
+            stimulus_dict
         )
-    else
+    elseif !isnothing(parsed_args[stimulus_sine_frequency_opt])
         stimulus_dict = Dict(
-            "type" => "audio",
-            "filename" => parsed_args[stimulus_audio_file_opt],
-            "gain" => parsed_args[stimulus_audio_gain_opt],
-            "spl_target" => parsed_args[stimulus_audio_spl_target_opt],
-            "spl_reference" => parsed_args[stimulus_audio_spl_reference_opt],
-            "onset_ramp_time" => parsed_args[stimulus_audio_onset_ramp_time_opt],
+            "type" => "sine",
+            "frequency" => parsed_args[stimulus_sine_frequency_opt],
+            "amplitude" => parsed_args[stimulus_sine_amplitude_opt],
+            "spl_target" => parsed_args[stimulus_spl_target_opt],
+            "spl_reference" => parsed_args[stimulus_spl_reference_opt],
+            "onset_ramp_time" => parsed_args[stimulus_onset_ramp_time_opt],
         )
 
         load_parameters(
             parsed_args[model_constants_file_opt],
             parsed_args[solver_params_file_opt],
             stimulus_dict
+        )
+    elseif !isnothing(parsed_args[stimulus_audio_file_opt])
+        stimulus_dict = Dict(
+            "type" => "audio",
+            "filename" => parsed_args[stimulus_audio_file_opt],
+            "gain" => parsed_args[stimulus_audio_gain_opt],
+            "spl_target" => parsed_args[stimulus_spl_target_opt],
+            "spl_reference" => parsed_args[stimulus_spl_reference_opt],
+            "onset_ramp_time" => parsed_args[stimulus_onset_ramp_time_opt],
+        )
+
+        load_parameters(
+            parsed_args[model_constants_file_opt],
+            parsed_args[solver_params_file_opt],
+            stimulus_dict
+        )
+    else
+        load_parameters(
+            parsed_args[model_constants_file_opt],
+            parsed_args[solver_params_file_opt],
+            parsed_args[stimulus_params_file_opt],
         )
     end
 end

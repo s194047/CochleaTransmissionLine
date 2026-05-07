@@ -170,7 +170,7 @@ end
 
 function main()
     parsed_args = parse_commandline()
-    data_filename = parsed_args["output-file"] # TODO: Move name from string literal to constant.
+    data_filename = parsed_args[output_file_opt]
 
     # Load parameters from config file.
     (; ctl_constants, stimulus, solver_params, metadata) = load_parameters_from_parsed_args(parsed_args)

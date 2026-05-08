@@ -18,6 +18,7 @@ export oscillator_rotation_frequency
 export oscillator_winding_frequency
 
 include("util.jl")
+export argparse_error
 export load_stimulus
 export SolverParams
 export load_parameters

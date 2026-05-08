@@ -45,7 +45,7 @@ for (file, file_idx) in zip(files_to_load, 1:n_files)
         window_end_idx = window_start_idx + window_length_samples - 1 # Julia slices are [inclusive:inclusive], so we subtract the last index by one
         println(stderr, "window: ($window_start_idx, $window_end_idx)")
         u_windowed = u_resampled[window_start_idx:window_end_idx, :]
-        window_rms_values[window_column_idx, :] = rms_values_columsn = oscillator_rms(u_windowed)
+        window_rms_values[window_column_idx, :] = oscillator_rms(u_windowed)
     end
     window_rms_values_list[file_idx] = window_rms_values
 end

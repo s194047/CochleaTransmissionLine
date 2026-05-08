@@ -51,6 +51,7 @@ function parse_commandline()::Dict
 end
 
 function main()
+    start_time = now(localzone())
     parsed_args = parse_commandline()
 
     input_filename        = parsed_args[input_file_opt]
@@ -95,12 +96,13 @@ function main()
 
     println(stderr, "Creating metadata dictionary.")
     metadata = Dict(
-        "ctl_metadta"           => ctl_metadata,
+        "start_time"            => start_time,
         "input_filename"        => input_filename,
         "output_filename"       => output_filename,
         "fs"                    => fs,
         "window_length_seconds" => window_length_seconds,
         "window_hop_seconds"    => window_hop_seconds,
+        "ctl_metadta"           => ctl_metadata,
     )
 
     println(stderr, "Writing the processed data in HDF5 format.")

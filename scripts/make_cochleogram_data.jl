@@ -113,7 +113,8 @@ function main()
         "ctl_metadata"          => ctl_metadata,
     )
 
-    println(stderr, "Writing the processed data in HDF5 format.")
+    println(stderr, "Writing the processed data in to $output_filename.")
+    mkpath(dirname(output_filename))
     h5open(output_filename, "w") do output_file
         output_file["n_samples"]                        = n_samples
         output_file["window_length_samples"]            = window_length_samples

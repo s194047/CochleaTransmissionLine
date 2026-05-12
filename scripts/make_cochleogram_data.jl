@@ -68,7 +68,7 @@ function main()
     println(stderr, "Window hop:                $window_hop_seconds s")
 
     println(stderr, "Loading JLD2 file with CTL solution.")
-    t, u, ctl_metadata = load(input_filename, "t", "u", "metadta")
+    t, u, ctl_metadata = load(input_filename, "t", "u", "metadata")
 
     if isnothing(fs)
         println(stderr, "No sample rate specified. Solution will not be resampled. Assuming uniform sampling periods.")
@@ -110,7 +110,7 @@ function main()
         "fs"                    => fs,
         "window_length_seconds" => window_length_seconds,
         "window_hop_seconds"    => window_hop_seconds,
-        "ctl_metadta"           => ctl_metadata,
+        "ctl_metadata"          => ctl_metadata,
     )
 
     println(stderr, "Writing the processed data in HDF5 format.")

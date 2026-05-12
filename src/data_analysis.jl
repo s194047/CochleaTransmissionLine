@@ -1,4 +1,6 @@
 using SciMLBase: ODESolution
+using Statistics
+using DSP
 
 function get_solution_samples(solution::ODESolution, t::Vector{Float64}, deriv=Val{0}; idxs=nothing)
     x = stack(solution(t, deriv, idxs=idxs).u, dims=1)
@@ -21,4 +23,61 @@ function instantaneous_rotation(x::Matrix{Float64}, dx::Matrix{Float64})
     dz = dx1 + im * dx2
 
     instantaneous_rotation(z, dz)
+end
+
+"""
+    oscillator_rms(u)
+
+Takes a matrix where the first axis is the time axis and the second axis is the oscillator index.
+One oscillator is two columns representing displacement `y` and velocity `v`, respectively.
+
+Returns the RMS value of the displacement `y` for each oscillator as a vector.
+"""
+function oscillator_rms(u::Matrix{Float64})::Vector{Float64}
+    # y, v = @views u[:, 1:2:end], u[:, 2:2:end]
+    y = @view u[:, 1:2:end]
+    vec(sqrt.(mean(y.^2, dims=1)))
+end
+
+"""
+    oscillator_winding_frequency(t, u)
+
+Takes a time vector and a matrix where the first axis is the time axis and the second axis is the oscillator index.
+One oscillator is two columns representing displacement `y` and velocity `v`, respectively.
+
+A winding means the state revolves 2π around the origin in phase space.
+
+Returns the winding frequency for each osicllator as a vector.
+"""
+function oscillator_winding_frequency(
+    t::Vector{Float64},
+    u::Matrix{Float64}
+)::Vector{Float64}
+    y, v = @views u[:, 1:2:end], u[:, 2:2:end]
+    θ = unwrap(atan.(v, y), dims=1)
+    Δθ = θ[end, :] - θ[1, :]
+    Δt = t[end] - t[1]
+    Δθ ./ Δt
+end
+
+"""
+    oscillator_rotation_frequency(t, u)
+
+Takes a time vector and a matrix where the first axis is the time axis and the second axis is the oscillator index.
+One oscillator is two columns representing displacement `y` and velocity `v`, respectively.
+
+A rotation means the curvature in phase space is 2π regardless of whether it is around the origin or not.
+
+Returns the rotation frequency for each osicllator as a vector.
+"""
+function oscillator_rotation_frequency(
+    t::Vector{Float64},
+    u::Matrix{Float64}
+)::Vector{Float64}
+    du = diff(u, dims=1)
+    dy, dv = @views du[:, 1:2:end], du[:, 2:2:end]
+    θ = unwrap(atan.(dv, dy), dims=1)
+    Δθ = θ[end, :] - θ[1, :]
+    Δt = t[end-1] - t[1] # due to diff being one shorter, we consider the second-to-last element of t as well
+    Δθ ./ Δt
 end

@@ -1,0 +1,4 @@
+# Parameters for generating initial conditions to be used in
+# subsequent simulations.
+u0_value: [1e-9, 0.0]
+tspan: [0.0, 20.000]

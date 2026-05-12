@@ -3,6 +3,7 @@ using CochleaTransmissionLine
 using JLD2
 using TimeZones
 using HDF5
+using JSON3
 using DataInterpolations
 using Statistics
 using DSP
@@ -49,6 +50,21 @@ function parse_commandline()::Dict
     )
 
     parse_args(arg_defs)
+end
+
+function make_jsonable(x)
+    if x isa ZonedDateTime
+        return string(x)
+
+    elseif x isa Dict
+        return Dict(string(k) => make_jsonable(v) for (k,v) in x)
+
+    elseif x isa AbstractVector
+        return [make_jsonable(v) for v in x]
+
+    else
+        return x
+    end
 end
 
 function main()
@@ -123,11 +139,12 @@ function main()
         output_file["window_rms_values"]                = window_rms_values
         output_file["window_winding_frequency_values"]  = window_winding_frequency_values
         output_file["window_rotation_frequency_values"] = window_rotation_frequency_values
-        meta = create_group(file, "metadata")
-        attrs = attributes(meta)
-        for (k, v) in metadata
-            attrs[k] = v
-        end
+    end
+
+    metadata_filename = "$output_filename.metadata.json"
+    println(stderr, "Writing metadata to $metadata_filename.")
+    open(metadata_filename, "w") do metadata_file
+        JSON3.write(metadata_file, make_jsonable(metadata))
     end
 end
 

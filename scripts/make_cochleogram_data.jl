@@ -31,7 +31,6 @@ function parse_commandline()::Dict
             :help => "Sample rate for the interpolation of the input data",
             :arg_type => Float64,
             :metavar => "SAMPLE_RATE",
-            :required => true,
         ),
         ["--$window_length_seconds_opt", "-l"], Dict(
             :help => "Window length in seconds",
@@ -56,7 +55,7 @@ function main()
 
     input_filename        = parsed_args[input_file_opt]
     output_filename       = parsed_args[output_file_opt]
-    fs                    = parsed_args[sample_rate_opt]
+    fs                    = get(parsed_args, sample_rate_opt, nothing)
     window_length_seconds = parsed_args[window_length_seconds_opt]
     window_hop_seconds    = parsed_args[window_hop_seconds_opt]
 
@@ -69,11 +68,18 @@ function main()
     println(stderr, "Loading JLD2 file with CTL solution.")
     t, u, ctl_metadata = load(input_filename, "t", "u", "metadta")
 
-    println(stderr, "Resampling the solution.")
-    u_stacked = stack(u, dims=1)
-    interpolator = CubicSpline(u_stacked', t)
-    t_resampled = collect(t[1]:1/fs:t[end])
-    u_resampled = stack(interpolator.(t_sampled), dims=1)
+    if isnothing(fs)
+        println(stderr, "No sample rate specified. Solution will not be resampled. Assuming uniform sampling periods.")
+        t_resampled, u_resampled = t, stack(u, dims=1)
+        fs = (length(t) - 1) / (t[end] - t[1])
+        println(stderr, "Extracted sample rate from time vector: $fs")
+    else
+        println(stderr, "Resampling the solution.")
+        u_stacked = stack(u, dims=1)
+        interpolator = CubicSpline(u_stacked', t)
+        t_resampled = collect(t[1]:1/fs:t[end])
+        u_resampled = stack(interpolator.(t_resampled), dims=1)
+    end
 
     n_samples = size(u_resampled, 1)
     window_length_samples = Int(window_length_seconds * fs)

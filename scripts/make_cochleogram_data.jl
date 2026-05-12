@@ -16,30 +16,30 @@ function parse_commandline()::Dict
     arg_defs = ArgParseSettings()
     add_arg_table(arg_defs,
         ["--$input_file_opt", "-i"], Dict(
-            :help => "JLD2 file containing the DDE solution of the CTL",
+            :help => "JLD2 file containing the DDE solution of the CTL.",
             :arg_type => String,
             :metavar => "FILENAME",
             :required => true,
         ),
         ["--$output_file_opt", "-o"], Dict(
-            :help => "Output HDF5 file containing the processed cochleogram data",
+            :help => "Output HDF5 file containing the processed cochleogram data.",
             :arg_type => String,
             :metavar => "FILENAME",
             :required => true,
         ),
         ["--$sample_rate_opt", "-s"], Dict(
-            :help => "Sample rate for the interpolation of the input data",
+            :help => "Sample rate for the interpolation of the input data. Should be left blank if the signal shouldn't be resampled.",
             :arg_type => Float64,
             :metavar => "SAMPLE_RATE",
         ),
         ["--$window_length_seconds_opt", "-l"], Dict(
-            :help => "Window length in seconds",
+            :help => "Window length in seconds.",
             :arg_type => Float64,
             :metavar => "LENGTH",
             :required => true,
         ),
         ["--$window_hop_seconds_opt", "-p"], Dict(
-            :help => "Window hop in seconds",
+            :help => "Window hop in seconds.",
             :arg_type => Float64,
             :metavar => "LENGTH",
             :required => true,

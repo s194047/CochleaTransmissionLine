@@ -60,6 +60,6 @@ $RUN_SCRIPT_PY -i $INPUT_DIR -g "*.wav" -o $OUTPUT_DIR -O jld2 -L $LOG_DIR \
     --model-constants-file model_constants.yaml \
     --solver-params-file params/solver_params/solver_params_1s.yaml \
     --stimulus-audio-file {i} \
-    --stimulus-audio-spl-target ${SPL_TARGET} \
-    --stimulus-audio-spl-reference ${SPL_REFERENCE} \
+    --stimulus-spl-target ${SPL_TARGET} \
+    --stimulus-spl-reference ${SPL_REFERENCE} \
     --output-file {o}

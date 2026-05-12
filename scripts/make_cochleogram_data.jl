@@ -86,7 +86,7 @@ function main()
     n_samples = size(u_resampled, 1)
     window_length_samples = Int(window_length_seconds * fs)
     window_hop_samples = Int(window_hop_seconds * fs)
-    window_start_idxs = 1:window_hop_samples:(n_samples - window_length_samples)
+    window_start_idxs = collect(1:window_hop_samples:(n_samples - window_length_samples))
 
     window_rms_values                = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)
     window_winding_frequency_values  = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)

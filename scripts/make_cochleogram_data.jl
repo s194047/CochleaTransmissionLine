@@ -31,7 +31,7 @@ function parse_commandline()::Dict
             :required => true,
         ),
         ["--$sample_rate_opt", "-s"], Dict(
-            :help => "Sample rate for the interpolation of the input data. Should be left blank if the signal shouldn't be resampled.",
+            :help => "Sample rate for the interpolation of the input data. Leave blank if the signal should not be resampled.",
             :arg_type => Float64,
             :metavar => "SAMPLE_RATE",
         ),

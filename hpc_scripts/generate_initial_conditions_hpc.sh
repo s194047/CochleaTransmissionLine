@@ -38,8 +38,8 @@ cd ~/MSc_project/cochleatransmissionline.jl
 RUN_SCRIPT_PY=~/MSc_project/run_script/run_script.py
 
 INPUT_DIR=params/solver_params/initial_conditions
-OUTPUT_BASE_DIR=data/initial_conditions/jld2
-LOG_BASE_DIR=data/initial_conditions/log
+OUTPUT_BASE_DIR=/work3/s194047/initial_conditions/jld2
+LOG_BASE_DIR=/work3/s194047/initial_conditions/log
 
 ROUGH_SUFFIX=rough
 NO_ROUGH_SUFFIX=no_rough

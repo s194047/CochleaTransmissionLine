@@ -6,12 +6,6 @@ using JLD2
 using DataInterpolations
 using TimeZones
 
-function argparse_error(arg_defs::ArgParseSettings, message::String)
-    println(stderr, "$message")
-    println(stderr, usage_string(arg_defs))
-    exit(1)
-end
-
 model_constants_file_opt = "model-constants-file"
 solver_params_file_opt = "solver-params-file"
 

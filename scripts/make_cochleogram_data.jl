@@ -38,7 +38,7 @@ function parse_commandline()::Dict
             :metavar => "LENGTH",
             :required => true,
         ),
-        ["--$window_hop_seconds_opt", "-h"], Dict(
+        ["--$window_hop_seconds_opt", "-p"], Dict(
             :help => "Window hop in seconds",
             :arg_type => Float64,
             :metavar => "LENGTH",

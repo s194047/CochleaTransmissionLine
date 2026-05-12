@@ -1,5 +1,6 @@
 using DSP
 using LinearAlgebra
+using Random
 
 #=====================
 Define Parameter Types
@@ -66,6 +67,12 @@ Define Parameter Types
     #       Δx should be calculated as: Δx = x_apex_value / n
     # Fluid mass to Cochlear Partion mass ratio
     fluid_CP_κ::Float64
+
+    # Roughness scaling coefficient
+    ϵ::Float64
+
+    # Roughness scaling seed
+    roughness_scaling_seed::Int64
 end
 
 @kwdef struct CochleaTransmissionLineParams
@@ -315,15 +322,19 @@ let
         σ_zweig_a, σ_zweig_k,
         nonlin_scaling_taper,
         fluid_CP_κ,
+        ϵ,
+        roughness_scaling_seed,
     ) = ctl_constants;
 
     x_indices = 0:n;
     x_norm_positions = x_indices / n;
     x_positions = x_norm_positions * x_apex_value;
     f_values = calculate_frequencies(x_positions = x_positions, A = A, λ = λ, κ = κ);
-    s_values = m * 4π^2 * f_values .^ 2;
-    Δx = x_apex_value / n
-    fluid_CP_β = Δx^2 * fluid_CP_κ
+    roughness_scaling_rng = Xoshiro(roughness_scaling_seed);
+    roughness_scaling_values = 1 .+ ϵ * randn(roughness_scaling_rng, n + 1);
+    s_values = (m * 4π^2 * f_values .^ 2) .* roughness_scaling_values;
+    Δx = x_apex_value / n;
+    fluid_CP_β = Δx^2 * fluid_CP_κ;
     CochleaTransmissionLineParams(
         x_norm_positions = x_norm_positions,
         τ_values = 1.742 ./ f_values,

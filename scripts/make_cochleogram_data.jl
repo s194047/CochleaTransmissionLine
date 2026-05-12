@@ -104,7 +104,7 @@ function main()
 
     println(stderr, "Creating metadata dictionary.")
     metadata = Dict(
-        "start_time"            => start_time,
+        "start_time"            => string(start_time),
         "input_filename"        => input_filename,
         "output_filename"       => output_filename,
         "fs"                    => fs,

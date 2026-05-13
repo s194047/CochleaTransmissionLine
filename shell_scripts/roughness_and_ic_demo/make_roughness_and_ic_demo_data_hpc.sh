@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/bin/sh
 ### General options
 ### -- specify queue --
 #BSUB -q hpc
@@ -32,9 +32,8 @@ module load julia/1.12.6
 
 # Change directory to the cochleatransmissionline.jl directory
 cd ~/MSc_project/cochleatransmissionline.jl
-SCRIPT_DIR=${0:a:h}
 
 # Overriding output dir to scratch space.
-OUTPUT_DIR=/work3/s194047/data/stimulus_zero
+export OUTPUT_DIR=/work3/s194047/data/stimulus_zero
 
-. "$SCRIPT_DIR/make_roughness_and_ic_demo_data.sh"
+zsh shell_scripts/roughness_and_ic_demo/make_roughness_and_ic_demo_data.sh

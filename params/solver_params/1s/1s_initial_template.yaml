@@ -1,4 +1,4 @@
-previous_solution_filename: "data/initial_conditions/initial_conditions_${INITIAL_LENGTH}_${ROUGHNESS}.jld2"
+previous_solution_filename: "$INITIAL_CONDITIONS_FILE"
 
 tspan: [0.0, 1.000]
 # Enter the sampling period to use when sampling the solution (saveat).

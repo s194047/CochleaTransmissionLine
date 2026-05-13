@@ -33,7 +33,8 @@ module load julia/1.12.6
 # Change directory to the cochleatransmissionline.jl directory
 cd ~/MSc_project/cochleatransmissionline.jl
 
-# Overriding output dir to scratch space.
+# Overriding locations to scratch space.
 export OUTPUT_DIR=/work3/s194047/data/stimulus_zero
+export INITIAL_CONDITIONS_DIR=/work3/s194047/data/initial_conditions
 
 zsh shell_scripts/roughness_and_ic_demo/make_roughness_and_ic_demo_data.sh

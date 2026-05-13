@@ -3,7 +3,8 @@
 SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/1s/1s_initial_template.yaml
 : "${OUTPUT_DIR:=data/stimulus_zero}"
 
-echo "OUTPUT_DIR: $OUTPUT_DIR"
+>&2 echo "OUTPUT_DIR: $OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
 
 stimulus_zero_ctl() {
     (

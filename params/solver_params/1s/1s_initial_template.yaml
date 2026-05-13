@@ -3,4 +3,4 @@ previous_solution_filename: "data/initial_conditions/initial_conditions_${INITIA
 tspan: [0.0, 1.000]
 # Enter the sampling period to use when sampling the solution (saveat).
 # Leave out if the solution should not be sampled when solving.
-#saveat: 1e-5
+saveat: 2e-5

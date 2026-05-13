@@ -1,28 +1,35 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 
-INPUT_DIR=params/solver_params/initial_conditions
-OUTPUT_BASE_DIR=data/initial_conditions/jld2
-LOG_BASE_DIR=data/initial_conditions/log
+SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/initial_conditions/initial_conditions_template.yaml
+: "${OUTPUT_DIR:=data/initial_conditions}"
 
-ROUGH_SUFFIX=rough
-NO_ROUGH_SUFFIX=no_rough
+>&2 echo "cwd: $(pwd)"
+>&2 echo "OUTPUT_DIR: $OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
 
-run_script.py -i $INPUT_DIR -g initial_conditions*.yaml \
-    -o $OUTPUT_BASE_DIR/$ROUGH_SUFFIX -O jld2 -L $LOG_BASE_DIR/$ROUGH_SUFFIX \
-    -S $ROUGH_SUFFIX -p 3 -- \
-    julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_$ROUGH_SUFFIX.yaml \
-        --solver-params-file {i} \
-        --stimulus-zero \
-        --only-save-last-interval \
-        --output-file {o} &
+initial_conditions_ctl() {
+    (
+        local ROUGHNESS=$1
+        local INITIAL_LENGTH_SECS=${2}s
+        export INITIAL_LENGTH_FLOAT=${2}.000
+        local OUTPUT_FILE=$OUTPUT_DIR/initial_conditions_${INITIAL_LENGTH_SECS}_${ROUGHNESS}.jld2
 
-run_script.py -i $INPUT_DIR -g initial_conditions*.yaml \
-    -o $OUTPUT_BASE_DIR/$NO_ROUGH_SUFFIX -O jld2 -L $LOG_BASE_DIR/$NO_ROUGH_SUFFIX \
-    -S $NO_ROUGH_SUFFIX -p 3 -- \
-    julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_$NO_ROUGH_SUFFIX.yaml \
-        --solver-params-file {i} \
-        --stimulus-zero \
-        --only-save-last-interval \
-        --output-file {o} &
+        echo "#### New run" >> "$OUTPUT_FILE.log"
+        date >> "$OUTPUT_FILE.log"
+
+        julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_${ROUGHNESS}.yaml \
+            --solver-params-file =(envsubst < "$SOLVER_PARAMS_TEMPLATE_FILE") \
+            --stimulus-zero \
+            --only-save-last-interval \
+            --output-file "$OUTPUT_FILE" \
+            &>> "$OUTPUT_FILE.log"
+    )
+}
+
+for roughness in rough no_rough; do
+    for initial_length in 5 20 100; do
+        initial_conditions_ctl "$roughness" "$initial_length" &
+    done
+done
 
 wait

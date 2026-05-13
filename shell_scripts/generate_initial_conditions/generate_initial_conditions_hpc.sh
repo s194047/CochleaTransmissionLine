@@ -3,7 +3,7 @@
 ### -- specify queue --
 #BSUB -q hpc
 ### -- set the job Name --
-#BSUB -J make_roughness_and_ic_demo_data
+#BSUB -J generate_initial_conditions
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 16
 ### -- specify that the cores must be on the same host --

@@ -1,4 +1,4 @@
-previous_solution_filename: "data/initial_conditions.jld2"
+previous_solution_filename: "data/initial_conditions/jld2/rough/initial_conditions_100s_rough.jld2"
 #u0_value: [1e-9, 0.0]
 
 tspan: [0.0, 0.100]

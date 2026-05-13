@@ -17,7 +17,7 @@ initial_conditions_ctl() {
         echo "#### New run" >> "$OUTPUT_FILE.log"
         date >> "$OUTPUT_FILE.log"
 
-        julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_${ROUGHNESS}.yaml \
+        unbuffer julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_${ROUGHNESS}.yaml \
             --solver-params-file =(envsubst < "$SOLVER_PARAMS_TEMPLATE_FILE") \
             --stimulus-zero \
             --only-save-last-interval \

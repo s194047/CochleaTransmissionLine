@@ -44,7 +44,7 @@ LOG_BASE_DIR=/work3/s194047/initial_conditions/log
 ROUGH_SUFFIX=rough
 NO_ROUGH_SUFFIX=no_rough
 
-$RUN_SCRIPT_PY -i $INPUT_DIR -g generate_initial_conditions*.yaml \
+$RUN_SCRIPT_PY -i $INPUT_DIR -g initial_conditions*.yaml \
     -o $OUTPUT_BASE_DIR/$ROUGH_SUFFIX -O jld2 -L $LOG_BASE_DIR/$ROUGH_SUFFIX \
     -S $ROUGH_SUFFIX -p 3 -- \
     julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_$ROUGH_SUFFIX.yaml \
@@ -53,7 +53,7 @@ $RUN_SCRIPT_PY -i $INPUT_DIR -g generate_initial_conditions*.yaml \
         --only-save-last-interval \
         --output-file {o} &
 
-$RUN_SCRIPT_PY -i $INPUT_DIR -g generate_initial_conditions*.yaml \
+$RUN_SCRIPT_PY -i $INPUT_DIR -g initial_conditions*.yaml \
     -o $OUTPUT_BASE_DIR/$NO_ROUGH_SUFFIX -O jld2 -L $LOG_BASE_DIR/$NO_ROUGH_SUFFIX \
     -S $NO_ROUGH_SUFFIX -p 3 -- \
     julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_$NO_ROUGH_SUFFIX.yaml \

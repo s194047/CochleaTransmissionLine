@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/1s/1s_initial_template.yaml
+SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/1s/1s_template.yaml
 : "${OUTPUT_DIR:=data/stimulus_zero}"
 : "${INITIAL_CONDITIONS_DIR:=data/initial_conditions}"
 

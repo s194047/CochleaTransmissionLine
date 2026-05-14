@@ -176,25 +176,22 @@ OUTPUT_DIR: /work3/s194047/data/initial_conditions
 
 The output data will end up in `/work3/s194047/data/initial_conditions` when the job is done.
 ```console
-s194047@n-62-27-21 s194047 $ pwd
-/work3/s194047
-s194047@n-62-27-21 s194047 $ tree data
-data
-└── initial_conditions
-    ├── initial_conditions_100s_no_rough.jld2
-    ├── initial_conditions_100s_no_rough.jld2.log
-    ├── initial_conditions_100s_rough.jld2
-    ├── initial_conditions_100s_rough.jld2.log
-    ├── initial_conditions_20s_no_rough.jld2
-    ├── initial_conditions_20s_no_rough.jld2.log
-    ├── initial_conditions_20s_rough.jld2
-    ├── initial_conditions_20s_rough.jld2.log
-    ├── initial_conditions_5s_no_rough.jld2
-    ├── initial_conditions_5s_no_rough.jld2.log
-    ├── initial_conditions_5s_rough.jld2
-    └── initial_conditions_5s_rough.jld2.log
+s194047@n-62-27-21 cochleatransmissionline.jl $ tree /work3/s194047/data/initial_conditions/
+/work3/s194047/data/initial_conditions/
+├── initial_conditions_100s_no_rough.jld2
+├── initial_conditions_100s_no_rough.jld2.log
+├── initial_conditions_100s_rough.jld2
+├── initial_conditions_100s_rough.jld2.log
+├── initial_conditions_20s_no_rough.jld2
+├── initial_conditions_20s_no_rough.jld2.log
+├── initial_conditions_20s_rough.jld2
+├── initial_conditions_20s_rough.jld2.log
+├── initial_conditions_5s_no_rough.jld2
+├── initial_conditions_5s_no_rough.jld2.log
+├── initial_conditions_5s_rough.jld2
+└── initial_conditions_5s_rough.jld2.log
 
-1 directory, 12 files
+0 directories, 12 files
 ```
 
 ## Generate zero stimulus 1s data
@@ -324,6 +321,26 @@ Loaded module: julia/1.12.6
 cwd: /zhome/26/f/146732/MSc_project/cochleatransmissionline.jl
 OUTPUT_DIR: /work3/s194047/data/stimulus_zero
 INITIAL_CONDITIONS_DIR: /work3/s194047/data/initial_conditions
+```
+
+The output data will end up in `/work3/s194047/data/initial_conditions` when the job is done.
+```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ tree /work3/s194047/data/stimulus_zero/
+/work3/s194047/data/stimulus_zero/
+├── stimulus_zero_initial_100s_no_rough.jld2
+├── stimulus_zero_initial_100s_no_rough.jld2.log
+├── stimulus_zero_initial_100s_rough.jld2
+├── stimulus_zero_initial_100s_rough.jld2.log
+├── stimulus_zero_initial_20s_no_rough.jld2
+├── stimulus_zero_initial_20s_no_rough.jld2.log
+├── stimulus_zero_initial_20s_rough.jld2
+├── stimulus_zero_initial_20s_rough.jld2.log
+├── stimulus_zero_initial_5s_no_rough.jld2
+├── stimulus_zero_initial_5s_no_rough.jld2.log
+├── stimulus_zero_initial_5s_rough.jld2
+└── stimulus_zero_initial_5s_rough.jld2.log
+
+0 directories, 12 files
 ```
 
 # FIXME anything below

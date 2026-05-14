@@ -194,6 +194,43 @@ s194047@n-62-27-21 cochleatransmissionline.jl $ tree /work3/s194047/data/initial
 0 directories, 12 files
 ```
 
+After run, write-protect the data files:
+```console
+s194047@n-62-9-41 ~ $ tree -p /work3/s194047/data/initial_conditions
+/work3/s194047/data/initial_conditions
+├── [-rw-r--r--]  initial_conditions_100s_no_rough.jld2
+├── [-rw-r--r--]  initial_conditions_100s_no_rough.jld2.log
+├── [-rw-r--r--]  initial_conditions_100s_rough.jld2
+├── [-rw-r--r--]  initial_conditions_100s_rough.jld2.log
+├── [-rw-r--r--]  initial_conditions_20s_no_rough.jld2
+├── [-rw-r--r--]  initial_conditions_20s_no_rough.jld2.log
+├── [-rw-r--r--]  initial_conditions_20s_rough.jld2
+├── [-rw-r--r--]  initial_conditions_20s_rough.jld2.log
+├── [-rw-r--r--]  initial_conditions_5s_no_rough.jld2
+├── [-rw-r--r--]  initial_conditions_5s_no_rough.jld2.log
+├── [-rw-r--r--]  initial_conditions_5s_rough.jld2
+└── [-rw-r--r--]  initial_conditions_5s_rough.jld2.log
+
+0 directories, 12 files
+s194047@n-62-9-41 ~ $ chmod -w -R /work3/s194047/data/initial_conditions
+s194047@n-62-9-41 ~ $ tree -p /work3/s194047/data/initial_conditions
+/work3/s194047/data/initial_conditions
+├── [-r--r--r--]  initial_conditions_100s_no_rough.jld2
+├── [-r--r--r--]  initial_conditions_100s_no_rough.jld2.log
+├── [-r--r--r--]  initial_conditions_100s_rough.jld2
+├── [-r--r--r--]  initial_conditions_100s_rough.jld2.log
+├── [-r--r--r--]  initial_conditions_20s_no_rough.jld2
+├── [-r--r--r--]  initial_conditions_20s_no_rough.jld2.log
+├── [-r--r--r--]  initial_conditions_20s_rough.jld2
+├── [-r--r--r--]  initial_conditions_20s_rough.jld2.log
+├── [-r--r--r--]  initial_conditions_5s_no_rough.jld2
+├── [-r--r--r--]  initial_conditions_5s_no_rough.jld2.log
+├── [-r--r--r--]  initial_conditions_5s_rough.jld2
+└── [-r--r--r--]  initial_conditions_5s_rough.jld2.log
+
+0 directories, 12 files
+```
+
 ## Generate zero stimulus 1s data
 For each version of the initial conditions, we run a 1s simulation with zero stimulus.
 
@@ -339,6 +376,43 @@ s194047@n-62-27-21 cochleatransmissionline.jl $ tree /work3/s194047/data/stimulu
 ├── stimulus_zero_initial_5s_no_rough.jld2.log
 ├── stimulus_zero_initial_5s_rough.jld2
 └── stimulus_zero_initial_5s_rough.jld2.log
+
+0 directories, 12 files
+```
+
+After run, write-protect the data files:
+```console
+s194047@n-62-9-41 ~ $ tree -p /work3/s194047/data/stimulus_zero/
+/work3/s194047/data/stimulus_zero/
+├── [-rw-r--r--]  stimulus_zero_initial_100s_no_rough.jld2
+├── [-rw-r--r--]  stimulus_zero_initial_100s_no_rough.jld2.log
+├── [-rw-r--r--]  stimulus_zero_initial_100s_rough.jld2
+├── [-rw-r--r--]  stimulus_zero_initial_100s_rough.jld2.log
+├── [-rw-r--r--]  stimulus_zero_initial_20s_no_rough.jld2
+├── [-rw-r--r--]  stimulus_zero_initial_20s_no_rough.jld2.log
+├── [-rw-r--r--]  stimulus_zero_initial_20s_rough.jld2
+├── [-rw-r--r--]  stimulus_zero_initial_20s_rough.jld2.log
+├── [-rw-r--r--]  stimulus_zero_initial_5s_no_rough.jld2
+├── [-rw-r--r--]  stimulus_zero_initial_5s_no_rough.jld2.log
+├── [-rw-r--r--]  stimulus_zero_initial_5s_rough.jld2
+└── [-rw-r--r--]  stimulus_zero_initial_5s_rough.jld2.log
+
+0 directories, 12 files
+s194047@n-62-9-41 ~ $ chmod -w -R /work3/s194047/data/stimulus_zero/
+s194047@n-62-9-41 ~ $ tree -p /work3/s194047/data/stimulus_zero/
+/work3/s194047/data/stimulus_zero/
+├── [-r--r--r--]  stimulus_zero_initial_100s_no_rough.jld2
+├── [-r--r--r--]  stimulus_zero_initial_100s_no_rough.jld2.log
+├── [-r--r--r--]  stimulus_zero_initial_100s_rough.jld2
+├── [-r--r--r--]  stimulus_zero_initial_100s_rough.jld2.log
+├── [-r--r--r--]  stimulus_zero_initial_20s_no_rough.jld2
+├── [-r--r--r--]  stimulus_zero_initial_20s_no_rough.jld2.log
+├── [-r--r--r--]  stimulus_zero_initial_20s_rough.jld2
+├── [-r--r--r--]  stimulus_zero_initial_20s_rough.jld2.log
+├── [-r--r--r--]  stimulus_zero_initial_5s_no_rough.jld2
+├── [-r--r--r--]  stimulus_zero_initial_5s_no_rough.jld2.log
+├── [-r--r--r--]  stimulus_zero_initial_5s_rough.jld2
+└── [-r--r--r--]  stimulus_zero_initial_5s_rough.jld2.log
 
 0 directories, 12 files
 ```

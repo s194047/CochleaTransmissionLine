@@ -16,6 +16,7 @@ stimulus_zero_ctl() {
         local INITIAL_LENGTH=$2
         local OUTPUT_FILE=$OUTPUT_DIR/stimulus_zero_initial_${INITIAL_LENGTH}_$ROUGHNESS.jld2
         export INITIAL_CONDITIONS_FILE="$INITIAL_CONDITIONS_DIR/initial_conditions_${INITIAL_LENGTH}_${ROUGHNESS}.jld2"
+        export SAVEAT_VALUE="2e-5"
 
         echo "#### New run" >> "$OUTPUT_FILE.log"
         cat =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) >> "$OUTPUT_FILE.log"

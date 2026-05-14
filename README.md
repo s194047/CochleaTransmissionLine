@@ -77,6 +77,8 @@ s194047@n-62-27-18 ~ $
 
 To run the simulations on LSF on HPC:
 ```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ pwd
+/zhome/26/f/146732/MSc_project/cochleatransmissionline.jl
 s194047@n-62-27-21 cochleatransmissionline.jl $ bsub < shell_scripts/generate_initial_conditions/generate_initial_conditions_hpc.sh
 Job <28428586> is submitted to queue <hpc>.
 ```
@@ -164,6 +166,14 @@ Running simulation for interval: (0.0, 0.1)
 Starting simulation...
 ```
 
+To follow the output of the job script itself, we look for the latest `bsub` stderr log file:
+```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ ls -rt *.err | tail -1 | xargs tail -f
+Loaded module: julia/1.12.6
+cwd: /zhome/26/f/146732/MSc_project/cochleatransmissionline.jl
+OUTPUT_DIR: /work3/s194047/data/initial_conditions
+```
+
 The output data will end up in `/work3/s194047/data/initial_conditions` when the job is done.
 ```console
 s194047@n-62-27-21 s194047 $ pwd
@@ -187,29 +197,139 @@ data
 1 directory, 12 files
 ```
 
+## Generate zero stimulus 1s data
+For each version of the initial conditions, we run a 1s simulation with zero stimulus.
+
+### Run locally
+To run the simulations locally:
+```console
+$ ./shell_scripts/roughness_and_ic_demo/make_roughness_and_ic_demo_data.sh
+```
+The output data is put in the relative path `data/initial_conditions`.
+
+### Run on HPC
+Login with `ssh` to `login1.gbar.dtu.dk`:
+```
+sofus@sofus-mba cochleatransmissionline.jl % ssh gbar
+... (like above)
+s194047@gbarlogin1 ~ $
+```
+
+You are now logged in to a *login node*.
+
+Remember to switch to an *application node* before submitting the job:
+```
+s194047@gbarlogin1 ~ $ linuxsh
+...
+s194047@n-62-27-18 ~ $
+```
+
+To run the simulations on LSF on HPC:
+```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ pwd
+/zhome/26/f/146732/MSc_project/cochleatransmissionline.jl
+s194047@n-62-27-21 cochleatransmissionline.jl $ bsub < shell_scripts/roughness_and_ic_demo/make_roughness_and_ic_demo_data_hpc.sh
+Job <28428697> is submitted to queue <hpc>.
+```
+
+To check that the job is running, use `bstat` and check the `STAT` column for value `RUN`:
+```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28428697   s194047 hpc        *demo_data      0 PEND       -          0:00:00
+s194047@n-62-27-21 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28428697   s194047 hpc        *demo_data     16 RUN   May 14 12:15    0:00:00
+```
+Tail the log files to follow progress:
+```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ tail -f /work3/s194047/data/stimulus_zero/*.log
+==> /work3/s194047/data/stimulus_zero/stimulus_zero_initial_100s_no_rough.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (99.9, 100.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -100.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+
+==> /work3/s194047/data/stimulus_zero/stimulus_zero_initial_100s_rough.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (99.9, 100.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -100.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+
+==> /work3/s194047/data/stimulus_zero/stimulus_zero_initial_20s_no_rough.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (19.9, 20.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -20.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+
+==> /work3/s194047/data/stimulus_zero/stimulus_zero_initial_20s_rough.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (19.9, 20.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -20.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+
+==> /work3/s194047/data/stimulus_zero/stimulus_zero_initial_5s_no_rough.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (4.9, 5.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -5.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+
+==> /work3/s194047/data/stimulus_zero/stimulus_zero_initial_5s_rough.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (4.9, 5.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -5.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+```
+
+To follow the output of the job script itself, we look for the latest `bsub` stderr log file:
+```console
+s194047@n-62-27-21 cochleatransmissionline.jl $ ls -rt *.err | tail -1 | xargs tail -f
+Loaded module: julia/1.12.6
+cwd: /zhome/26/f/146732/MSc_project/cochleatransmissionline.jl
+OUTPUT_DIR: /work3/s194047/data/stimulus_zero
+INITIAL_CONDITIONS_DIR: /work3/s194047/data/initial_conditions
+```
+
 # FIXME anything below
 
 
 ## Plots for showing roughness vs. no roughness as well as the effect of initial condition length
-
-### Generate initial conditions
-
-Generate all necessary initial conditions by running the script:
-```sh
-shell_scripts/generate_initial_conditions/generate_initial_conditions.sh
-```
-
-For running this on the HPC, use the version of the script:
-```sh
-hpc_scripts/generate_initial_conditions_hpc.sh
-```
-
-which does the same but as an LSF job. \
-The script uses the utility `run_script.py` to call `run_ctl.jl`. The choice was made to have an easy way to maintain a relationship between input and output file names. Since it's only six files, it might be simpler to write a simple shell script that just runs the 6 `run_ctl.jl` instances in parallel.
-
-### Generate zero stimulus results
-
-Run `run_ctl.jl` with 1s of zero stimulus on for all initial conditions. Make sure to use the same model constants as were used for the initial conditions. Use the
 
 ### Make plots
 

@@ -85,13 +85,22 @@ function main()
 
     println(stderr, "Loading JLD2 file with CTL solution.")
     t, u, ctl_metadata = load(input_filename, "t", "u", "metadata")
+    saveat = get(ctl_metadata["solver_params"], "saveat", nothing)
 
     if isnothing(fs)
+        if isnothing(saveat)
+            error("No saveat found in CTL metadata and no resampling rate specified.")
+        end
+
         println(stderr, "No sample rate specified. Solution will not be resampled. Assuming uniform sampling periods.")
         t_resampled, u_resampled = t, stack(u, dims=1)
         fs = (length(t) - 1) / (t[end] - t[1])
         println(stderr, "Extracted sample rate from time vector: $fs")
     else
+        if !isnothing(saveat)
+            error("Trying to resample a solution which already is uniformly sampled (saveat specified when solving the ODE).")
+        end
+
         println(stderr, "Resampling the solution.")
         u_stacked = stack(u, dims=1)
         interpolator = CubicSpline(u_stacked', t)
@@ -104,18 +113,32 @@ function main()
     window_hop_samples = Int(window_hop_seconds * fs)
     window_start_idxs = collect(1:window_hop_samples:(n_samples - window_length_samples))
 
-    window_rms_values                = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)
+    # Initialize empty matrices to store the RMS and frequency values of each window.
+    window_y_rms_values              = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)
+    window_v_rms_values              = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)
     window_winding_frequency_values  = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)
     window_rotation_frequency_values = zeros(length(window_start_idxs), size(u_resampled, 2) ÷ 2)
+
+    # Process the data in windows.
     println(stderr, "Processing the data in $(length(window_start_idxs)) windows.")
-    for (window_start_idx, window_column_idx) in zip(window_start_idxs, 1:length(window_start_idxs))
-        window_end_idx = window_start_idx + window_length_samples - 1 # Julia slices are [inclusive:inclusive], so we subtract the last index by one
-        println(stderr, "window: ($window_start_idx, $window_end_idx)")
-        t_windowed = t_resampled[window_start_idx:window_end_idx]
-        u_windowed = u_resampled[window_start_idx:window_end_idx, :]
-        window_rms_values[window_column_idx, :]                = oscillator_rms(u_windowed)
-        window_winding_frequency_values[window_column_idx, :]  = oscillator_winding_frequency(t_windowed, u_windowed)
-        window_rotation_frequency_values[window_column_idx, :] = oscillator_rotation_frequency(t_windowed, u_windowed)
+    for (window_start_idx, window_row_idx) in zip(window_start_idxs, 1:length(window_start_idxs))
+        # Calculate the last index of the window from the start index and the length of the window.
+        # Julia slices are [inclusive:inclusive], so we subtract the last index by one to have the correct length.
+        window_end_idx = window_start_idx + window_length_samples - 1
+        println(stderr, "window: [$window_start_idx:$window_end_idx]")
+        t_windowed = @view t_resampled[window_start_idx:window_end_idx]
+        u_windowed = @view u_resampled[window_start_idx:window_end_idx, :]
+
+        # Calculate and store the y and v RMS values for this window.
+        window_y_rms_value, window_v_rms_value = oscillator_rms(u_windowed)
+        window_y_rms_values[window_row_idx, :] = window_y_rms_value
+        window_v_rms_values[window_row_idx, :] = window_v_rms_value
+
+        # Calculate and store the winding frequency for this window.
+        window_winding_frequency_values[window_row_idx, :] = oscillator_winding_frequency(t_windowed, u_windowed)
+
+        # Calculate and store the rotation frequency for this window.
+        window_rotation_frequency_values[window_row_idx, :] = oscillator_rotation_frequency(t_windowed, u_windowed)
     end
 
     println(stderr, "Creating metadata dictionary.")
@@ -136,7 +159,8 @@ function main()
         output_file["window_length_samples"]            = window_length_samples
         output_file["window_hop_samples"]               = window_hop_samples
         output_file["window_start_idxs"]                = window_start_idxs
-        output_file["window_rms_values"]                = window_rms_values
+        output_file["window_y_rms_values"]              = window_y_rms_values
+        output_file["window_v_rms_values"]              = window_v_rms_values
         output_file["window_winding_frequency_values"]  = window_winding_frequency_values
         output_file["window_rotation_frequency_values"] = window_rotation_frequency_values
     end
@@ -144,7 +168,7 @@ function main()
     metadata_filename = "$output_filename.metadata.json"
     println(stderr, "Writing metadata to $metadata_filename.")
     open(metadata_filename, "w") do metadata_file
-        JSON3.write(metadata_file, make_jsonable(metadata))
+        JSON3.pretty(metadata_file, make_jsonable(metadata))
     end
 end
 

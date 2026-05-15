@@ -29,7 +29,7 @@ MODEL_CONSTANTS_FILE=model_constants_${ROUGHNESS}.yaml
 
 # Run the run_script.py program
 "$RUN_SCRIPT_PY" -i "$INPUT_DIR" -g "*.wav" -o "$OUTPUT_DIR" -O jld2 -L "$LOG_DIR" \
-    -S "$RUN_ID" -p "$PARALLELISM" -T "$TOTAL_FILES" -- \
+    -S "__$RUN_ID" -p "$PARALLELISM" -T "$TOTAL_FILES" -- \
     julia --project=. scripts/run_ctl.jl \
     --model-constants-file "$MODEL_CONSTANTS_FILE" \
     --solver-params-file =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) \

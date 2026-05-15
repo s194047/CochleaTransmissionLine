@@ -13,7 +13,7 @@
 : "${SPL_REFERENCE:=0.001}"
 : "${IC_DURATION:=100}"
 : "${ROUGHNESS:=rough}"
-: "${SAVEAT:=2e-5}"
+: "${SAVEAT=2e-5}" # Allow SAVEAT to be set but empty
 
 # Root for data to be processed and for writing the output.
 : "${DATA_ROOT:=data}"

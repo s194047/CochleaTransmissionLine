@@ -16,11 +16,18 @@ SCRIPT_DIR=${0:a:h}
 
 WINDOW_PARAMS_SUFFIX="__WINDOW_LENGTH-${WINDOW_LENGTH_SECONDS}s__WINDOW_HOP-${WINDOW_HOP_SECONDS}s"
 
+# Optional resampling.
+SAMPLE_RATE_ARGS=()
+if [[ -z $SAVEAT ]]; then
+    SAMPLE_RATE_ARGS+=(--sample-rate 50000)
+fi
+
 # Run the run_script.py program
 "$RUN_SCRIPT_PY" -i "$INPUT_DIR" -g "*.jld2" -o "$OUTPUT_DIR" -O hdf5 -L "$LOG_DIR" \
     -S "$WINDOW_PARAMS_SUFFIX" -p "$PARALLELISM" -T "$TOTAL_FILES" -- \
     julia --project=. scripts/make_cochleogram_data.jl \
     --input-file {i} \
+    --output-file {o} \
+    "${SAMPLE_RATE_ARGS[@]}" \
     --window-length-seconds ${WINDOW_LENGTH_SECONDS} \
-    --window-hop-seconds ${WINDOW_HOP_SECONDS} \
-    --output-file {o}
+    --window-hop-seconds ${WINDOW_HOP_SECONDS}

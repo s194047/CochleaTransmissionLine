@@ -18,3 +18,5 @@ nonlin_scaling_taper: 0.5
 β: -10
 μ_β: 5
 fluid_CP_κ: 5.333333333333333e6
+ϵ: 0.0
+roughness_scaling_seed: 0

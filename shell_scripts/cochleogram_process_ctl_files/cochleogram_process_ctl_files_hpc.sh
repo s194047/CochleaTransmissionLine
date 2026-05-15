@@ -28,7 +28,7 @@
 #BSUB -e Output_%J.err
 
 ### Get environment variables
-#BSUB -env "TOTAL_FILES,PARALLELISM,IC_DURATION,ROUGHNESS,SAVEAT"
+#BSUB -env "TOTAL_FILES,PARALLELISM,IC_DURATION=100,ROUGHNESS=rough,SAVEAT=2e-5"
 
 # Load modules needed by the application
 module load python3/3.14.2

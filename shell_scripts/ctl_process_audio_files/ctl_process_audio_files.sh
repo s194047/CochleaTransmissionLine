@@ -8,6 +8,7 @@ SCRIPT_DIR=${0:a:h}
 . "$SCRIPT_DIR/../common/speech_commands_common.sh"
 
 # SAVEAT needs to be exported to be available in subshell running envsubst.
+[[ "$SAVEAT" == "no" ]] && { echo "ERROR: invalid SAVEAT value of 'no'"; exit 1; }
 export SAVEAT
 
 # Setup solver parameter file.

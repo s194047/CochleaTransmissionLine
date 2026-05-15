@@ -18,7 +18,7 @@ WINDOW_PARAMS_SUFFIX="__WINDOW_LENGTH-${WINDOW_LENGTH_SECONDS}s__WINDOW_HOP-${WI
 
 # Optional resampling.
 SAMPLE_RATE_ARGS=()
-if [[ -z $SAVEAT ]]; then
+if [[ "$SAVEAT" == "no" ]]; then
     SAMPLE_RATE_ARGS+=(--sample-rate 50000)
 fi
 

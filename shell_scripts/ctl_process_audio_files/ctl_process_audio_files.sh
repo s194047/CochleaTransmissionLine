@@ -33,7 +33,7 @@ MODEL_CONSTANTS_FILE=model_constants_${ROUGHNESS}.yaml
 
 # Construct name for run dir containing all parameters in the name.
 SAVEAT_NAME="${SAVEAT:-no}"
-RUN_ID="spl_target-${SPL_TARGET}__spl_ref-${SPL_REF}__ic_duration-${IC_DURATION}__roughness-${ROUGHNESS}__saveat-${SAVEAT_NAME}"
+RUN_ID="spl_target-${SPL_TARGET}__spl_reference-${SPL_REFERENCE}__ic_duration-${IC_DURATION}__roughness-${ROUGHNESS}__saveat-${SAVEAT_NAME}"
 
 # Directories for input, output and logs.
 : "${INPUT_DIR:="$SPEECH_COMMANDS_ROOT/input/$SUB_DIR"}"

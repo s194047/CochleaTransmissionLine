@@ -3,7 +3,7 @@
 ### -- specify queue --
 #BSUB -q hpc
 ### -- set the job Name --
-#BSUB -J run_script_py
+#BSUB -J ctl_process_audio_files
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 16
 ### -- specify that the cores must be on the same host --

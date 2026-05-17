@@ -5,7 +5,7 @@ SCRIPT_DIR=${0:a:h}
 . "$SCRIPT_DIR/../common/speech_commands_common.sh"
 
 # Directories for input, output and logs.
-: "${INPUT_DIR:="$SPEECH_COMMANDS_ROOT/output/$RUN_ID/cochleogram"}"
+: "${INPUT_DIR:="$SPEECH_COMMANDS_ROOT/output/$RUN_ID/cochleogram/data"}"
 : "${OUTPUT_ROOT:="$SPEECH_COMMANDS_ROOT/output/$RUN_ID/cochleogram_figures"}"
 : "${OUTPUT_DIR:="$OUTPUT_ROOT/data"}"
 : "${LOG_DIR:="$OUTPUT_ROOT/log"}"

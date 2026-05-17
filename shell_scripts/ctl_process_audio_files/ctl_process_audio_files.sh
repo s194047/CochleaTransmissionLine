@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env zsh -e
 
 # Check that required variables are defined.
 : "${SUB_DIR:?ERROR: Must specify subdirectory to process}"

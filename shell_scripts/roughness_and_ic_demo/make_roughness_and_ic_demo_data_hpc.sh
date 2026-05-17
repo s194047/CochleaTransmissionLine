@@ -37,4 +37,4 @@ cd ~/MSc_project/cochleatransmissionline.jl
 export OUTPUT_DIR=/work3/s194047/data/stimulus_zero
 export INITIAL_CONDITIONS_DIR=/work3/s194047/data/initial_conditions
 
-zsh shell_scripts/roughness_and_ic_demo/make_roughness_and_ic_demo_data.sh
+zsh -e shell_scripts/roughness_and_ic_demo/make_roughness_and_ic_demo_data.sh

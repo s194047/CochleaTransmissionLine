@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env zsh -e
 
 SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/1s/1s_template.yaml
 : "${OUTPUT_DIR:=data/stimulus_zero}"

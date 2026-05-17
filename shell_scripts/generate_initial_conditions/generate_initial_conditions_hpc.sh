@@ -36,4 +36,4 @@ cd ~/MSc_project/cochleatransmissionline.jl
 # Overriding output dir to scratch space.
 export OUTPUT_DIR=/work3/s194047/data/initial_conditions
 
-zsh shell_scripts/generate_initial_conditions/generate_initial_conditions.sh
+zsh -e shell_scripts/generate_initial_conditions/generate_initial_conditions.sh

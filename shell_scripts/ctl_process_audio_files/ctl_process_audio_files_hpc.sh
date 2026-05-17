@@ -43,4 +43,4 @@ export RUN_SCRIPT_PY=~/MSc_project/run_script/run_script.py
 # Overriding locations to data root on scratch space.
 export DATA_ROOT=/work3/s194047/data
 
-zsh shell_scripts/ctl_process_audio_files/ctl_process_audio_files.sh
+zsh -e shell_scripts/ctl_process_audio_files/ctl_process_audio_files.sh

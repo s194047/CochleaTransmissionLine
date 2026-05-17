@@ -417,6 +417,170 @@ s194047@n-62-9-41 ~ $ tree -p /work3/s194047/data/stimulus_zero/
 0 directories, 12 files
 ```
 
+## Run CTL on Speech Audio Files
+Run CTL on the speech audio data files for the four keywords “yes”, “no”, “up”, and “down” from the “speech_commands_v0.01” test corpus found here:
+* http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz
+
+First, switch to an application node:
+
+```console
+s194047@gbarlogin1 ~ $ linuxsh
+...
+s194047@n-62-27-18 ~ $
+```
+
+We test with two files because we currently have too little space left on the scratch `/work3` volume.
+
+```console
+s194047@n-62-27-18 cochleatransmissionline.jl $ SUB_DIR=yes TOTAL_FILES=2 PARALLELISM=2 bsub < shell_scripts/ctl_process_audio_files/ctl_process_audio_files_hpc.sh
+Job <28437661> is submitted to queue <hpc>.
+s194047@n-62-27-18 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28437661   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+s194047@n-62-27-18 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28437661   s194047 hpc        *dio_files     16 RUN   May 15 21:06    0:00:00
+s194047@n-62-27-18 cochleatransmissionline.jl $
+```
+
+```console
+s194047@n-62-27-18 cochleatransmissionline.jl $ tail -f /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-100__roughness-rough__saveat-2e-5/ctl/data/yes/*.log
+==> /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-100__roughness-rough__saveat-2e-5/ctl/data/yes/004ae714_nohash_0_spl_target-60.0__spl_reference-0.001__ic_duration-100__roughness-rough__saveat-2e-5.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (99.9, 100.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -100.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+
+==> /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-100__roughness-rough__saveat-2e-5/ctl/data/yes/004ae714_nohash_1_spl_target-60.0__spl_reference-0.001__ic_duration-100__roughness-rough__saveat-2e-5.jld2.log <==
+Setting all CP initial conditions to the last state in the previous solution.
+Previous solution timespan: (99.9, 100.0)
+Current simulation timespan: (0.0, 1.0)
+Shifting previous solution by -100.0 seconds to align with the current simulation.
+Defining history function using interpolation of the previous solution.
+Maximum delay in system: 0.08721137827142772 seconds.
+Maximum run time per segment: 0.1 seconds.
+Divided total timespan into 10 intervals of 0.1 seconds each.
+Running simulation for interval: (0.0, 0.1)
+Starting simulation...
+```
+
+## Process CTL output
+We start processing existing files processed without *roughness*. (When these are all processed and the output validated, we can delete them to make space for a new CTL run.)
+
+First, switch to an application node:
+
+```console
+s194047@gbarlogin1 ~ $ linuxsh
+...
+s194047@n-62-27-18 ~ $
+```
+
+Because the files were generated with old initial conditions (5s and without roughness), CTL solver without roughness and no `saveat` given and thus non-uniformly sampled, we set:
+* `IC_DURATION=5`: Instructs the script to find the right folder.
+* `ROUGHNESS=no_rough`: Instructs the script to find the right folder.
+* `SAVEAT=no`: Instructs the script to find the right folder and to uniformly resample with 50,000 Hz.
+
+Now, submit a job to process 20 files.
+
+```console
+s194047@n-62-27-18 cochleatransmissionline.jl $ TOTAL_FILES=20 PARALLELISM=16 IC_DURATION=5 ROUGHNESS=no_rough SAVEAT=no bsub < shell_scripts/cochleogram_process_ctl_files/cochleogram_process_ctl_files_hpc.sh
+Job <28437894> is submitted to queue <hpc>.
+s194047@n-62-27-18 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28437894   s194047 hpc        *ctl_files     16 RUN   May 15 23:10    0:00:08
+s194047@n-62-27-18 cochleatransmissionline.jl $
+```
+
+This script was killed by the LSF system after processing 15 files because we exceeded the memory limit of 5 GB/core (80 GB total) probably caused by all scripts started at the same time and resampling in parallel.
+
+Now, process all 2,800 files:
+
+```console
+s194047@n-62-27-18 cochleatransmissionline.jl $ TOTAL_FILES=3000 PARALLELISM=16 IC_DURATION=5 ROUGHNESS=no_rough SAVEAT=no bsub < shell_scripts/cochleogram_process_ctl_files/cochleogram_process_ctl_files_hpc.sh
+Job <28437901> is submitted to queue <hpc>.
+s194047@n-62-27-18 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28437901   s194047 hpc        *ctl_files      0 PEND       -          0:00:00
+s194047@n-62-27-18 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28437901   s194047 hpc        *ctl_files     16 RUN   May 15 23:21    0:00:09
+s194047@n-62-27-18 cochleatransmissionline.jl $
+```
+
+We now have:
+
+```console
+s194047@gbarlogin1 ~ $ tree -d /work3/s194047/data
+/work3/s194047/data
+├── initial_conditions
+├── speech_commands_v0.01_up_down_yes_no
+│   ├── input
+│   │   ├── down
+│   │   ├── no
+│   │   ├── up
+│   │   └── yes
+│   └── output
+│       └── spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no
+│           ├── cochleogram
+│           │   ├── data
+│           │   │   ├── down
+│           │   │   ├── no
+│           │   │   ├── up
+│           │   │   └── yes
+│           │   └── log
+│           └── ctl
+│               ├── data
+│               │   ├── down
+│               │   ├── no
+│               │   ├── up
+│               │   └── yes
+│               └── log
+│                   ├── down
+│                   ├── no
+│                   ├── up
+│                   └── yes
+└── stimulus_zero
+
+28 directories
+```
+
+The relevant output is in the this sub hierarchy in folder:
+* `spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no`
+```console
+cochleogram
+├── data
+│   ├── down
+│   ├── no
+│   ├── up
+│   └── yes
+└── log
+```
+
+Validating the expected amount of files:
+
+```console
+s194047@gbarlogin1 ~ $ ls -l /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no/cochleogram/data/**/*.hdf5 | wc -l
+2800
+s194047@gbarlogin1 ~ $ ls -l /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no/cochleogram/data/**/*.json | wc -l
+2800
+```
+
+Write protect the files:
+```console
+s194047@gbarlogin1 ~ $ find /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no/cochleogram/data/ -type f -print0 | xargs -0 chmod -w
+```
+
+Validate that all files are write protected:
+```console
+s194047@gbarlogin1 ~ $ find /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no/cochleogram/data/ -type f -print0 | xargs -0 ls -l | grep -vF "-r--r--r--"
+```
+
 # FIXME anything below
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env zsh -e
 
 # Source common definitions for speech command processing scripts.
 SCRIPT_DIR=${0:a:h}

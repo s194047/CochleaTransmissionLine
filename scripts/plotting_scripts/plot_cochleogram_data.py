@@ -122,7 +122,7 @@ def main() -> None:
     axs[1, 1].set_title("Rotation")
 
     fig.supxlabel("Time / s")
-    fig.supylabel("BM Position / m")
+    fig.supylabel("BM position / m")
 
     # Save figure.
     fig.savefig(parsed_args.output_file)

@@ -64,7 +64,7 @@ function main()
     if parsed_args["x-type"] == "length"
         x_apex_value = metadata["model_constants"]["x_apex_value"]
         x = LinRange(0, x_apex_value, n + 1)
-        xlabel = "BM Position / m"
+        xlabel = "BM position / m"
     else # parsed_args["x-type"] == "index"
         x = 0:n
         xlabel = "Oscillator Index"

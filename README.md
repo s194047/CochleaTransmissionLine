@@ -581,6 +581,63 @@ Validate that all files are write protected:
 s194047@gbarlogin1 ~ $ find /work3/s194047/data/speech_commands_v0.01_up_down_yes_no/output/spl_target-60.0__spl_reference-0.001__ic_duration-5__roughness-no_rough__saveat-no/cochleogram/data/ -type f -print0 | xargs -0 ls -l | grep -vF "-r--r--r--"
 ```
 
+## Pipelining jobs
+
+LSF jobs can be submitted with the `-w` option to wait for another job. Here, we submit `plot_cochleogram_data_hpc.sh` to be run after the previous job `cochleogram_process_ctl_files_hpc` is done (exit code 0) since it needs the files produced by that job.
+```console
+$ TOTAL_FILES=3000 PARALLELISM=32 IC_DURATION=100 ROUGHNESS=rough SAVEAT=2e-5 bsub -w "done(28454463)" < shell_scripts/plot_cochleogram_data/plot_cochleogram_data_hpc.sh
+
+$ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28454463   s194047 hpc        *ctl_files     32 RUN   May 18 20:11    0:25:21
+28454625   s194047 hpc        *gram_data      0 PEND       -          0:00:00
+
+
+$ bjobs -l 28454625
+…
+ PENDING REASONS:
+ Job dependency condition not satisfied;
+…
+```
+
+```console
+s194047@n-62-30-1 cochleatransmissionline.jl $ SUB_DIR=up TOTAL_FILES=700 PARALLELISM=16 ROUGHNESS=no_rough bsub < shell_scripts/ctl_process_audio_files/ctl_process_audio_files_hpc.sh
+Job <28489792> is submitted to queue <hpc>.
+s194047@n-62-30-1 cochleatransmissionline.jl $ SUB_DIR=down TOTAL_FILES=700 PARALLELISM=16 ROUGHNESS=no_rough bsub < shell_scripts/ctl_process_audio_files/ctl_process_audio_files_hpc.sh
+Job <28489793> is submitted to queue <hpc>.
+s194047@n-62-30-1 cochleatransmissionline.jl $ SUB_DIR=yes TOTAL_FILES=700 PARALLELISM=16 ROUGHNESS=no_rough bsub < shell_scripts/ctl_process_audio_files/ctl_process_audio_files_hpc.sh
+Job <28489794> is submitted to queue <hpc>.
+s194047@n-62-30-1 cochleatransmissionline.jl $ SUB_DIR=no TOTAL_FILES=700 PARALLELISM=16 ROUGHNESS=no_rough bsub < shell_scripts/ctl_process_audio_files/ctl_process_audio_files_hpc.sh
+Job <28489795> is submitted to queue <hpc>.
+s194047@n-62-30-1 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28489792   s194047 hpc        *dio_files      6 PEND       -          0:00:00
+28489793   s194047 hpc        *dio_files      7 PEND       -          0:00:00
+28489794   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+28489795   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+s194047@n-62-30-1 cochleatransmissionline.jl $ TOTAL_FILES=3000 PARALLELISM=32 IC_DURATION=100 ROUGHNESS=no_rough SAVEAT=2e-5 bsub -w "done(28489792) && done(28489793) && done(28489794) && done(28489795)" < shell_scripts/cochleogram_process_ctl_files/cochleogram_process_ctl_files_hpc.sh
+Job <28489800> is submitted to queue <hpc>.
+s194047@n-62-30-1 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28489792   s194047 hpc        *dio_files      6 PEND       -          0:00:00
+28489793   s194047 hpc        *dio_files      7 PEND       -          0:00:00
+28489794   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+28489795   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+28489800   s194047 hpc        *ctl_files      0 PEND       -          0:00:00
+s194047@n-62-30-1 cochleatransmissionline.jl $ TOTAL_FILES=3000 PARALLELISM=32 IC_DURATION=100 ROUGHNESS=no_rough SAVEAT=2e-5 bsub -w "done(28489800)" < shell_scripts/plot_cochleogram_data/plot_cochleogram_data_hpc.sh
+Job <28489801> is submitted to queue <hpc>.
+s194047@n-62-30-1 cochleatransmissionline.jl $ bstat
+JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
+28489792   s194047 hpc        *dio_files      6 PEND       -          0:00:00
+28489793   s194047 hpc        *dio_files      7 PEND       -          0:00:00
+28489794   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+28489795   s194047 hpc        *dio_files      0 PEND       -          0:00:00
+28489800   s194047 hpc        *ctl_files      0 PEND       -          0:00:00
+28489801   s194047 hpc        *gram_data      0 PEND       -          0:00:00
+```
+
+Instead of manually writing the job dependencies, it can be automated in a script. The `shell_scripts/run_pipeline.sh` script does exactly that. It runs four `ctl_process_audio_files` jobs. After those are done, it runs `cochleogram_process_ctl_files`. After that job is done, it runs `plot_cochleogram_data`. This means that for a certain parameter such as SPL_TARGET, the whole pipeline of running the CTL, extracting cochleogram metrics and plotting can be scheduled with one command.
+
 # FIXME anything below
 
 

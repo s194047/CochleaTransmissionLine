@@ -97,10 +97,19 @@ def main() -> None:
     last_time_tick = window_start_times_seconds[-1] + window_length_seconds - window_hop_seconds
 
     # Calculate extent of the Basilar Membrane (BM) position axis (x).
+    # There are n points, where the first is exactly at 0 and the last is exaclty at x_apex_value.
+    # We calculate the distance between points, dx, since we need to align points with pixel centers.
     x_apex_value = metadata["ctl_metadata"]["model_constants"]["x_apex_value"]
+    n = metadata["ctl_metadata"]["model_constants"]["n"]
+    dx = x_apex_value / n
 
     # Combine extents to be used in plots.
-    extent = [first_time_tick, last_time_tick, x_apex_value, 0]
+    extent = [
+        first_time_tick,
+        last_time_tick,
+        x_apex_value + 0.5 * dx,
+        0.0 - 0.5 * dx
+    ]
 
     # Calculate figure width and height in inches.
     fig_width_inches = parsed_args.figure_width_pts / PT_PER_INCH

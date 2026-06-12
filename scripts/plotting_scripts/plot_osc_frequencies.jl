@@ -5,6 +5,12 @@ using JLD2
 using CairoMakie
 using ArgParse
 
+# Conversion factor: 72.27 LaTeX points per 72 Makie (PostScript) points
+const latex_pt_per_pt = 72.27 / 72
+
+# Aspect ratio of plot
+const figure_aspect_ratio = 4 / 3
+
 function parse_commandline()::Dict
     arg_defs = ArgParseSettings()
     add_arg_table(arg_defs,
@@ -38,8 +44,14 @@ function parse_commandline()::Dict
             :help => "Title of the plot",
             :arg_type => String,
             :metavar => "TITLE",
+            :required => false,
+        ),
+        ["--figure-width-pts", "-w"], Dict(
+            :help => "Width of generated image in LaTeX unit pt (1/72.27 in).",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
             :required => true,
-        )
+        ),
     )
 
     parse_args(arg_defs)
@@ -63,21 +75,34 @@ function main()
     n = metadata["model_constants"]["n"]
     if parsed_args["x-type"] == "length"
         x_apex_value = metadata["model_constants"]["x_apex_value"]
-        x = LinRange(0, x_apex_value, n + 1)
-        xlabel = "BM position / m"
+        x = LinRange(0, x_apex_value, n + 1) .* 1000
+        xlabel = "BM position / mm"
     else # parsed_args["x-type"] == "index"
         x = 0:n
         xlabel = "Oscillator Index"
     end
-    f = Figure()
-    ax = Axis(f[1, 1], yscale=log10)
-    plot!(ax, x, (abs.(frequency_function(t, u)) ./ 2π))
+
+    width = parsed_args["figure-width-pts"]
+    height = width / figure_aspect_ratio
+
+    f = Figure(size=(width, height))
+    ax = Axis(
+        f[1, 1],
+        yscale = log10,
+        yminorticksvisible = true,
+        yminorgridvisible = true,
+        yminorticks = IntervalsBetween(9),
+    )
+    scatter!(ax, x, (abs.(frequency_function(t, u)) ./ 2π))
+    ylims!(ax, 1e0, 3e4)
     ax.xlabel = xlabel
     ax.ylabel = "$(uppercasefirst(parsed_args["frequency-type"])) frequency / Hz"
-    ax.title = parsed_args["title"]
+    if !isnothing(parsed_args["title"])
+        ax.title = parsed_args["title"]
+    end
 
     mkpath(dirname(parsed_args["output-file"]))
-    save(parsed_args["output-file"], f)
+    save(parsed_args["output-file"], f, pt_per_unit=1/latex_pt_per_pt)
 end
 
 # Only run if script is executed directly.

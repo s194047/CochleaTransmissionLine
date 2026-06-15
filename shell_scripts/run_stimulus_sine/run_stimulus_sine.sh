@@ -25,7 +25,7 @@ stimulus_sine_1000_ctl() {
 
         unbuffer julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_rough.yaml \
             --solver-params-file =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) \
-            --stimulus-sine-frequency 1000 --stimulus-sine-amplitude 0.001 \
+            --stimulus-sine-frequency $FREQUENCY --stimulus-sine-amplitude $AMPLITUDE \
             --output-file "$OUTPUT_FILE" \
             &>> "$OUTPUT_FILE.log"
     )

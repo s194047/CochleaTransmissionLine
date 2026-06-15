@@ -6,7 +6,7 @@ set -euo pipefail
 
 SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/template.yaml
 
-: "${OUTPUT_DIR:=${DATA_ROOT}/stimulus_sine}"
+: "${OUTPUT_BASE_DIR:=${DATA_ROOT}/stimulus_sine}"
 : "${IC_DURATION:=100}"
 : "${ROUGHNESS:=rough}"
 : "${INITIAL_CONDITIONS_FILE:=${DATA_ROOT}/initial_conditions/initial_conditions_${IC_DURATION}s_${ROUGHNESS}.jld2}"
@@ -18,15 +18,15 @@ SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/template.yaml
 RUN_ID="frequency-${FREQUENCY}__duration-${DURATION}__onset_ramp_time-${ONSET_RAMP_TIME}__ic_duration-${IC_DURATION}__roughness-${ROUGHNESS}__saveat-${SAVEAT}"
 
 >&2 echo "cwd: $(pwd)"
->&2 echo "OUTPUT_DIR: $OUTPUT_DIR"
->&2 echo "INITIAL_CONDITIONS_FILE: $INITIAL_CONDITIONS_FILE"
-
-mkdir -p "$OUTPUT_DIR"
+>&2 echo "OUTPUT_BASE_DIR: $OUTPUT_BASE_DIR"
+>&2 echo "RUN_ID: $RUN_ID"
 
 stimulus_sine_1000_ctl() {
     (
         local AMPLITUDE=$1
-        local OUTPUT_FILE=$OUTPUT_DIR/${RUN_ID}/${RUN_ID}__amplitude-${AMPLITUDE}.jld2
+        local OUTPUT_DIR=$OUTPUT_BASE_DIR/${RUN_ID}
+	mkdir -p "$OUTPUT_DIR"
+        local OUTPUT_FILE="$OUTPUT_DIR/${RUN_ID}__amplitude-${AMPLITUDE}.jld2"
         export INITIAL_CONDITIONS_FILE
         export SAVEAT
         export DURATION
@@ -35,7 +35,7 @@ stimulus_sine_1000_ctl() {
         cat =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) >> "$OUTPUT_FILE.log"
         date >> "$OUTPUT_FILE.log"
 
-        unbuffer julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_rough.yaml \
+        unbuffer julia --project=. scripts/run_ctl.jl --model-constants-file "model_constants_$ROUGHNESS.yaml" \
             --solver-params-file =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) \
             --stimulus-sine-frequency "$FREQUENCY" --stimulus-sine-amplitude "$AMPLITUDE" \
             --stimulus-onset-ramp-time "$ONSET_RAMP_TIME" \

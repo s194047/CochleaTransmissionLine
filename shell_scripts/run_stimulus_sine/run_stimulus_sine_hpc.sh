@@ -27,14 +27,16 @@
 #BSUB -o Output_%J.out
 #BSUB -e Output_%J.err
 
+### Get environment variables
+#BSUB -env "IC_DURATION,ROUGHNESS,FREQUENCY,DURATION,ONSET_RAMP_TIME"
+
 # Load modules needed by the application
 module load julia/1.12.6
 
 # Change directory to the cochleatransmissionline.jl directory
 cd ~/MSc_project/cochleatransmissionline.jl
 
-# Overriding locations to scratch space.
-export OUTPUT_DIR=/work3/s194047/data/stimulus_sine
-export INITIAL_CONDITIONS_FILE=/work3/s194047/data/initial_conditions/initial_conditions_100s_rough.jld2
+# Overriding locations to data root on scratch space.
+export DATA_ROOT=/work3/s194047/data
 
 zsh -e shell_scripts/run_stimulus_sine/run_stimulus_sine.sh

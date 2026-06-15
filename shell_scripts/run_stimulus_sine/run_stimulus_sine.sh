@@ -23,7 +23,7 @@ stimulus_sine_1000_ctl() {
         cat =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) >> "$OUTPUT_FILE.log"
         date >> "$OUTPUT_FILE.log"
 
-        echo unbuffer julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_rough.yaml \
+        unbuffer julia --project=. scripts/run_ctl.jl --model-constants-file model_constants_rough.yaml \
             --solver-params-file =(envsubst < $SOLVER_PARAMS_TEMPLATE_FILE) \
             --stimulus-sine --stimulus-sine-frequency 1000 --stimulus-sine-amplitude 0.001 \
             --output-file "$OUTPUT_FILE" \

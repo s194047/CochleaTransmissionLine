@@ -104,7 +104,7 @@ function main()
 
     text_offset = matplotlib.transforms.ScaledTranslation(-text_pad_pt / latex_pt_per_in, -text_pad_pt / latex_pt_per_in, fig.dpi_scale_trans)
 
-    glob_patterns = ["*s_rough.jld2", "*s_no_rough.jld2"]
+    glob_patterns = ["*s_no_rough.jld2", "*s_rough.jld2"]
     for (i, glob_pattern) in enumerate(glob_patterns)
         ax = axs[i - 1]
         input_files = sort(glob(glob_pattern, parsed_args["input-folder"]), lt=natural)
@@ -146,7 +146,8 @@ function main()
         for m in [match(r"_(\d+)s_", f)]
         if m !== nothing
     ])
-    fig.legend(durations, loc="outside upper center", ncols=3)
+    labels = ["$(d)\\,s" for d in durations]
+    fig.legend(labels, loc="outside upper center", ncols=3)
 
     if !isnothing(parsed_args["title"])
         fig.suptitle(parsed_args["title"])

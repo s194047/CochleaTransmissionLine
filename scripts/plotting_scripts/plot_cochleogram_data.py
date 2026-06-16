@@ -130,8 +130,8 @@ def main() -> None:
     axs[1, 1].imshow(np.abs(window_rotation_frequency_values / (2 * np.pi)), aspect="auto", extent=extent)
     axs[1, 1].set_title("Rotation")
 
-    fig.supxlabel("Time / s")
-    fig.supylabel("BM position / m")
+    fig.supxlabel("time / s")
+    fig.supylabel("distance from stapes / m")
 
     # Save figure.
     fig.savefig(parsed_args.output_file)

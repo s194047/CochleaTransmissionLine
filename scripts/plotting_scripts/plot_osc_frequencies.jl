@@ -77,10 +77,10 @@ function main()
     if parsed_args["x-type"] == "length"
         x_apex_value = metadata["model_constants"]["x_apex_value"]
         x = LinRange(0, x_apex_value, n + 1) .* 1000
-        x_label = "BM position / mm"
+        x_label = "distance from stapes / mm"
     else # parsed_args["x-type"] == "index"
         x = 0:n
-        x_label = "Oscillator Index"
+        x_label = "oscillator index"
     end
 
     fig_width_in = column_width_pt / latex_pt_per_in
@@ -97,7 +97,7 @@ function main()
     xlim(0.0, x_apex_value .* 1000)
     ylim(1e0, 3e4)
     xlabel(x_label)
-    ylabel("$(uppercasefirst(parsed_args["frequency-type"])) frequency / Hz")
+    ylabel("$(lowercase(parsed_args["frequency-type"])) frequency / Hz")
     if !isnothing(parsed_args["title"])
         title(parsed_args["title"])
     end

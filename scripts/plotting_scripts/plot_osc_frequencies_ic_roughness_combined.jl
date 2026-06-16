@@ -96,10 +96,10 @@ function main()
 
     if parsed_args["x-type"] == "length"
         x = LinRange(0, x_apex_value, n + 1) .* 1000
-        x_label = "BM position / mm"
+        x_label = "distance from stapes / mm"
     else # parsed_args["x-type"] == "index"
         x = 0:n
-        x_label = "Oscillator Index"
+        x_label = "oscillator index"
     end
 
     text_offset = matplotlib.transforms.ScaledTranslation(-text_pad_pt / latex_pt_per_in, -text_pad_pt / latex_pt_per_in, fig.dpi_scale_trans)
@@ -137,7 +137,7 @@ function main()
     end
 
     fig.supxlabel(x_label)
-    fig.supylabel("$(uppercasefirst(parsed_args["frequency-type"])) frequency / Hz")
+    fig.supylabel("$(lowercase(parsed_args["frequency-type"])) frequency / Hz")
 
     input_files = sort(glob(glob_patterns[1], parsed_args["input-folder"]), lt=natural)
     durations = sort([

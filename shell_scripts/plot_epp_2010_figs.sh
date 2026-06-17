@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-set -x
 
 export IC_DURATION=100
 export FREQUENCY=1000

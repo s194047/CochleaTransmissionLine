@@ -65,6 +65,13 @@ function parse_commandline()::Dict
             :range_tester => ∈(["index", "length"]),
             :required => true,
         ),
+        ["--orientation", "-O"], Dict(
+            :help => "Stack subplots horizontally or vertically.",
+            :arg_type => String,
+            :metavar => "{horizontal,vertical}",
+            :range_tester => ∈(["horizontal", "vertical"]),
+            :required => true,
+        ),
         ["--title", "-t"], Dict(
             :help => "Title of the plot",
             :arg_type => String,
@@ -79,9 +86,15 @@ end
 function main()
     parsed_args = parse_commandline()
 
-    fig_width_in = text_width_pt / latex_pt_per_in
-    fig_height_in = column_width_pt / latex_pt_per_in / figure_aspect_ratio
-    fig, axs = subplots(1, 2, sharex=true, sharey=true, figsize=(fig_width_in, fig_height_in))
+    if parsed_args["orientation"] == "horizontal"
+        fig_width_in = text_width_pt / latex_pt_per_in
+        fig_height_in = column_width_pt / latex_pt_per_in / figure_aspect_ratio
+        fig, axs = subplots(1, 2, sharex=true, sharey=true, figsize=(fig_width_in, fig_height_in))
+    else # parsed_args["orientation"] == "vertical"
+        fig_width_in = column_width_pt / latex_pt_per_in
+        fig_height_in = column_width_pt / latex_pt_per_in / figure_aspect_ratio * 2
+        fig, axs = subplots(2, 1, sharex=true, sharey=true, figsize=(fig_width_in, fig_height_in))
+    end
 
     frequency_functions::Dict{String, Function} = Dict(
         "winding" => oscillator_winding_frequency,

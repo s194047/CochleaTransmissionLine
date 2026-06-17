@@ -47,6 +47,8 @@ function main()
     input_folder = parsed_args["input-folder"]
     output_file = parsed_args["output-file"]
 
+    println("Processing folder: $input_folder")
+
     v_ref = 1e-6
 
     x_apex = 0.035 # meters
@@ -61,7 +63,6 @@ function main()
     filenames_sorted = sort(filenames, by=amplitude_from_filename)
     for data_filename in filenames_sorted
         full_data_path = joinpath(input_folder, data_filename)
-        println("Processing file: $full_data_path")
         u = load(full_data_path, "u")
         u = stack(u, dims=1)
         v = u[:,2:2:end]

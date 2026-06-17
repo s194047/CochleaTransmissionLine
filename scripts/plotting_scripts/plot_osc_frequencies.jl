@@ -90,6 +90,7 @@ function main()
     scatter(
         x,
         abs.(frequency_function(t, u)) ./ (2π),
+        color="C2"
     )
     # grid(true)
     ax = fig.axes[0]

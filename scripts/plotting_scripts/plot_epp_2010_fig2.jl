@@ -75,7 +75,7 @@ function main()
         max_osc_idx = osc_idxs[end]
         x_values_mm = x_apex_mm * (osc_idxs ./ max_osc_idx)
 
-        plot(x_values_mm, v_amplitudes_db, color="#808080", linestyle="-")
+        plot(x_values_mm, v_amplitudes_db, color="C1", linestyle="-")
     end
     ylim(-20, 90)
     mkpath(dirname(output_file))

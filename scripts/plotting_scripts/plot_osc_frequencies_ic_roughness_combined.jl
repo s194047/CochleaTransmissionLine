@@ -14,13 +14,8 @@ matplotlib.style.use("../paper.mplstyle")
 base_ms = matplotlib.rcParams["lines.markersize"]
 
 # Define greys and sizes.
-const grey_colors = ["#c0c0c0", "#808080", "#000000"]  # mid, dark, black
 const ms_factors = [2.0, 1.5, 1.0]
 const marker_sizes_s = (base_ms .* ms_factors) .^ 2
-
-# Build cycler.
-const cycler = matplotlib.pyplot.matplotlib.cycler
-const cycle = cycler(color=grey_colors)
 
 # widths from the LaTeX document.
 const column_width_pt = 221.0
@@ -108,8 +103,6 @@ function main()
     for (i, glob_pattern) in enumerate(glob_patterns)
         ax = axs[i - 1]
         input_files = sort(glob(glob_pattern, parsed_args["input-folder"]), lt=natural)
-
-        ax.set_prop_cycle(cycle)
 
         for input_file ∈ input_files
             # JLD2 file with CTL data to load

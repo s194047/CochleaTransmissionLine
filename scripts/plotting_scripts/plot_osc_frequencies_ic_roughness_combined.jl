@@ -31,7 +31,8 @@ const figure_aspect_ratio = 4 / 3
 # Define text padding.
 const text_pad_pt = 4
 
-const letters = [raw"\textbf{" * c * "}" for c in 'A':'Z']
+# const letters = [raw"\textbf{" * c * "}" for c in 'A':'Z']
+const letters = [c for c in 'A':'Z']
 
 const n = 1000
 const x_apex_value = 0.035

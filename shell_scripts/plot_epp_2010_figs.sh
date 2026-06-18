@@ -12,6 +12,13 @@ for roughness in rough no_rough; do
             julia --project=. scripts/plotting_scripts/plot_epp_2010_fig2.jl \
             -i "data/stimulus_sine/frequency-${FREQUENCY}__${SUFFIX}" \
             -o "data/figures/epp_2010/fig_2__${SUFFIX}.pdf" &
+
+            julia --project=. scripts/plotting_scripts/plot_epp_2010_fig3.jl \
+            -i "data/stimulus_sine/frequency-${FREQUENCY}__${SUFFIX}" \
+            -r 0.001 \
+            -s 540 \
+            -e 140 \
+            -o "data/figures/epp_2010/fig_3__${SUFFIX}.pdf" &
         done
     done
 done

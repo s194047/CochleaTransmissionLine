@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "268eab50fab2b204311736f53c77db988c6ce53b"
+project_hash = "7ebf6235cdd51d642de8fca4e42551f558446504"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -198,7 +198,7 @@ uuid = "fb6a15b2-703c-40df-9091-08a04967cfa9"
 version = "0.1.13"
 
 [[deps.CochleaTransmissionLine]]
-deps = ["ArgParse", "DSP", "DataInterpolations", "DelayDiffEq", "HDF5", "JLD2", "JSON3", "LinearAlgebra", "OrdinaryDiffEq", "Plots", "Random", "SciMLBase", "Statistics", "TimeZones", "WAV", "YAML"]
+deps = ["ArgParse", "DSP", "DataInterpolations", "DelayDiffEq", "HDF5", "JLD2", "JSON3", "LinearAlgebra", "OrdinaryDiffEq", "Plots", "PythonPlot", "Random", "SciMLBase", "Statistics", "TimeZones", "WAV", "YAML"]
 path = "."
 uuid = "6a8b58e3-ca38-4c91-9f06-924036e66dc7"
 version = "0.1.0"

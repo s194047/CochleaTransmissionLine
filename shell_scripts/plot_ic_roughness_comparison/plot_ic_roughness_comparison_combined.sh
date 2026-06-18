@@ -7,6 +7,8 @@ for orientation in horizontal vertical; do
         -o data/figures/ic_roughness_comparison/${freq_type}_combined_${orientation}.pdf \
         -O ${orientation} \
         -f ${freq_type} \
-        -x length
+        -x length &
     done
 done
+
+wait

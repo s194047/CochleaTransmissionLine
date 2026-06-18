@@ -78,6 +78,10 @@ function main()
         plot(x_values_mm, v_amplitudes_db, color="C1", linestyle="-")
     end
     ylim(-20, 90)
+
+    xlabel(raw"distance from stapes / mm")
+    ylabel(raw"velocity / dB\,re\,$10^{-6}$\,m/s")
+
     mkpath(dirname(output_file))
     fig.savefig(output_file)
 end

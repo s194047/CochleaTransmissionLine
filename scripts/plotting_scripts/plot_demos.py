@@ -32,7 +32,7 @@ def main() -> None:
 
     plt.figure(figsize=(FIG_WIDTH_IN, FIG_HEIGHT_IN))
 
-    plt.plot(x, y)
+    plt.plot(x, y, color="C2")
     plt.xlim(-1, 1)
     plt.ylim(-1, 1)
 
@@ -41,9 +41,9 @@ def main() -> None:
         dx = x[i+1] - x[i]
         dy = y[i+1] - y[i]
         plt.annotate("", xy=(x[i] + dx, y[i] + dy), xytext=(x[i], y[i]),
-                    arrowprops=dict(arrowstyle="->", color="C0"))
+                    arrowprops=dict(arrowstyle="->", color="C2"))
     i1 = int(len(t) * 0.075)
-    plt.plot([0, x[i1]], [0, y[i1]], "o:")
+    plt.plot([0, x[i1]], [0, y[i1]], "o:", color="C2")
     plt.annotate(r"$(0, 0)$", (0, 0), (0, -1), textcoords="offset fontsize")
     plt.annotate(r"$(y, v)$", (x[i1], y[i1]), (0, 0.5), textcoords="offset fontsize")
     plt.xticks([])

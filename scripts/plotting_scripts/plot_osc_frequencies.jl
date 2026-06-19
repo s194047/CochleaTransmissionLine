@@ -5,6 +5,7 @@ using JLD2
 using ArgParse
 using PythonPlot
 
+matplotlib.use("pdf")
 matplotlib.style.use("../paper.mplstyle")
 
 # Read base size from rc.

@@ -44,6 +44,7 @@ function parse_commandline()::Dict
     parse_args(arg_defs)
 end
 
+matplotlib.use("pdf")
 matplotlib.style.use("../paper.mplstyle")
 
 # widths from the LaTeX document

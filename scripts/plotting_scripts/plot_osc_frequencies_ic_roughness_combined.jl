@@ -7,6 +7,8 @@ using Glob
 using NaturalSort
 using PythonPlot
 
+matplotlib.use("pdf")
+
 # Load Matplotlib RC file.
 matplotlib.style.use("../paper.mplstyle")
 

@@ -4,6 +4,7 @@ import os
 from typing import Final
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -22,6 +23,7 @@ FIG_WIDTH_IN = COLUMN_WIDTH_PT / PT_PER_INCH
 FIG_HEIGHT_IN = FIG_WIDTH_IN / FIGURE_ASPECT_RATIO
 
 
+matplotlib.use("pdf")
 plt.style.use("../paper.mplstyle")
 
 def main() -> None:

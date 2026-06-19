@@ -7,6 +7,12 @@ using PythonPlot
 
 matplotlib.style.use("../paper.mplstyle")
 
+# Read base size from rc.
+base_ms = matplotlib.rcParams["lines.markersize"]
+
+# Use half the marker size than the defualt.
+const marker_size = base_ms / 2
+
 # widths from the LaTeX document
 const column_width_pt = 221.0
 const text_width_pt = 452.0
@@ -90,7 +96,8 @@ function main()
     scatter(
         x,
         abs.(frequency_function(t, u)) ./ (2π),
-        color="C2"
+        s=marker_size,
+        color="C2",
     )
     # grid(true)
     ax = fig.axes[0]

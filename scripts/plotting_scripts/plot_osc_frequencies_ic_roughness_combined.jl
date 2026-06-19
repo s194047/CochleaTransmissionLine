@@ -13,9 +13,8 @@ matplotlib.style.use("../paper.mplstyle")
 # Read base size from rc.
 base_ms = matplotlib.rcParams["lines.markersize"]
 
-# Define greys and sizes.
-const ms_factors = [2.0, 1.5, 1.0]
-const marker_sizes_s = (base_ms .* ms_factors) .^ 2
+# Use half the marker size than the defualt.
+const marker_size = base_ms / 2
 
 # widths from the LaTeX document.
 const column_width_pt = 221.0
@@ -128,6 +127,7 @@ function main()
             ax.scatter(
                 x,
                 abs.(frequency_function(t, u)) ./ (2π),
+                s=marker_size,
             )
             # ax.grid(true)
             ax.set_yscale("log", base=10)

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
+import os
 from typing import Final
 
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-OUTPUT_DIR: Final = Path("data/figures/demos")
+FIGURE_DIR = os.getenv("FIGURE_DIR")
+if FIGURE_DIR is None:
+    FIGURE_DIR = "data/figures"
+OUTPUT_DIR: Final = Path(FIGURE_DIR) / "demos"
 
 COLUMN_WIDTH_PT: Final = 221.0
 TEXT_WIDTH_PT: Final = 452.0

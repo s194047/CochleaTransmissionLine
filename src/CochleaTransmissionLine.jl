@@ -26,4 +26,7 @@ export SolverParams
 export load_parameters
 export make_initial_conditions
 
+include("information_methods.jl")
+export mutual_information_matrix
+
 end # module CochleaTransmissionLine

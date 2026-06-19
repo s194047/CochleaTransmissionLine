@@ -1,41 +1,48 @@
 # Taken from https://gitlab.gbar.dtu.dk/bepp/bsc_mikkel_berrig/
 
 using KernelDensity
+using Base.Threads
 
 function surprise(p::Float64)
     x = -p*log2(p)
     return ifelse(isnan(x),0.,x)
 end
-function entropy(xs::Vector{Float64})
+function entropy(xs::AbstractVector{Float64})
     U = kde(xs[abs.(xs).<typemax(Int32)/2])
     A = U.x[2]-U.x[1]
     P = sum(U.density[:])*A
     return sum(surprise.(U.density[:]))*A/P
 end
-function joint_entropy(xs::Vector{Float64}, ys::Vector{Float64})
+function joint_entropy(xs::AbstractVector{Float64}, ys::AbstractVector{Float64})
     U = kde((xs[abs.(xs).<typemax(Int32)/2],
              ys[abs.(ys).<typemax(Int32)/2]))
     A = (U.x[2]-U.x[1]) * (U.y[2]-U.y[1])
     P = sum(U.density[:])*A
     return sum(surprise.(U.density[:]))*A/P
 end
-function conditional_entropy(xs::Vector{Float64}, ys::Vector{Float64})
+function conditional_entropy(xs::AbstractVector{Float64}, ys::AbstractVector{Float64})
     return joint_entropy(xs,ys) - entropy(ys)
 end
-function mutual_information(xs::Vector{Float64}, ys::Vector{Float64})
+function mutual_information(xs::AbstractVector{Float64}, ys::AbstractVector{Float64})
     return entropy(xs) + entropy(ys) - joint_entropy(xs,ys)
 end
-function mutual_information(xs::Vector{Float64}, ys::Matrix{Float64})
+function mutual_information(xs::AbstractVector{Float64}, ys::AbstractMatrix{Float64})
     return [mutual_information(xs,ys[i,:]) for i in 1:size(ys,1)]
 end
 
-function mutual_information_matrix(xs::Matrix{Float64})
-    N = size(xs,1)
+function mutual_information_matrix(xs::AbstractMatrix{Float64})
+    N = size(xs,2)
     M = zeros(N,N)
-    for i in 2:N
-        for j in 1:i-1
-            M[i,j] = mutual_information(xs[i,:],xs[j,:])
-            M[j,i] = M[i,j]
+
+    pairs = [(i, j) for i in 2:N for j in 1:i-1]
+    pair_total = length(pairs)
+    processed_pair_count = Atomic{Int}(0)
+    @threads for (i, j) in pairs
+        M[i,j] = mutual_information(@view(xs[:,i]),@view(xs[:,j]))
+        M[j,i] = M[i,j]
+        current_pair_count = atomic_add!(processed_pair_count, 1) + 1
+        if current_pair_count % 1000 == 0
+            println(stderr, "$current_pair_count / $pair_total  ($(round(100current_pair_count/pair_total; digits=1))%)")
         end
     end
     return M

@@ -57,8 +57,10 @@ function main()
     M_y = mutual_information_matrix(y)
     M_v = mutual_information_matrix(v)
 
+    output_file = parsed_args["output-file"]
+    mkpath(dirname(output_file))
     jldsave(
-        parsed_args["output-file"],
+        output_file,
         ;
         M_y,
         M_v,

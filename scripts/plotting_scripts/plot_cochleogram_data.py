@@ -2,6 +2,8 @@
 
 import h5py
 import json
+from matplotlib.ticker import MaxNLocator
+from matplotlib.transforms import ScaledTranslation
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,6 +16,9 @@ plt.style.use("../paper.mplstyle")
 
 PT_PER_INCH: Final = 72.27
 FIGURE_ASPECT_RATIO: Final = 4 / 3
+
+LETTERS: Final = [c for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+TEXT_PAD_PT: Final = 4
 
 def parse_args() -> argparse.Namespace:
     arg_parser = argparse.ArgumentParser()
@@ -100,7 +105,7 @@ def main() -> None:
     # Calculate extent of the Basilar Membrane (BM) position axis (x).
     # There are n points, where the first is exactly at 0 and the last is exaclty at x_apex_value.
     # We calculate the distance between points, dx, since we need to align points with pixel centers.
-    x_apex_value = metadata["ctl_metadata"]["model_constants"]["x_apex_value"]
+    x_apex_value = metadata["ctl_metadata"]["model_constants"]["x_apex_value"] * 1000
     n = metadata["ctl_metadata"]["model_constants"]["n"]
     dx = x_apex_value / n
 
@@ -125,20 +130,68 @@ def main() -> None:
         "norm": "asinh",
     }
 
+    xticker = MaxNLocator(8, steps=[1, 2, 5, 10])
+    yticker = MaxNLocator(5, steps=[1, 2, 5, 10])
+
+    text_offset = ScaledTranslation(TEXT_PAD_PT / PT_PER_INCH, -TEXT_PAD_PT / PT_PER_INCH, fig.dpi_scale_trans)
+
     axs[0, 0].imshow(window_y_rms_values, **im_kwargs)
-    axs[0, 0].set_title("y RMS")
+    # axs[0, 0].set_title("y RMS")
+    axs[0, 0].text(
+        0.0, 1.0,
+        LETTERS[0],
+        horizontalalignment="left",
+        verticalalignment="top",
+        transform=axs[0, 0].transAxes + text_offset,
+        color="black",
+    )
+    axs[0, 0].xaxis.set_major_locator(xticker)
+    axs[0, 0].yaxis.set_major_locator(yticker)
 
     axs[0, 1].imshow(window_v_rms_values, **im_kwargs)
-    axs[0, 1].set_title("v RMS")
+    # axs[0, 1].set_title("v RMS")
+    axs[0, 1].text(
+        0.0, 1.0,
+        LETTERS[1],
+        horizontalalignment="left",
+        verticalalignment="top",
+        transform=axs[0, 1].transAxes + text_offset,
+        color="black",
+    )
+    axs[0, 1].xaxis.set_major_locator(xticker)
+    axs[0, 1].yaxis.set_major_locator(yticker)
 
-    axs[1, 0].imshow(np.abs(window_winding_frequency_values / (2 * np.pi)), **im_kwargs)
-    axs[1, 0].set_title("Winding")
 
-    axs[1, 1].imshow(np.abs(window_rotation_frequency_values / (2 * np.pi)), **im_kwargs)
-    axs[1, 1].set_title("Rotation")
+    axs[1, 0].imshow(np.abs(window_winding_frequency_values / (2 * np.pi)), **im_kwargs, vmin=25)
+    # axs[1, 0].set_title("Winding")
+    axs[1, 0].text(
+        0.0, 1.0,
+        LETTERS[2],
+        horizontalalignment="left",
+        verticalalignment="top",
+        transform=axs[1, 0].transAxes + text_offset,
+        color="white",
+    )
+    axs[1, 0].xaxis.set_major_locator(xticker)
+    axs[1, 0].yaxis.set_major_locator(yticker)
+
+
+    axs[1, 1].imshow(np.abs(window_rotation_frequency_values / (2 * np.pi)), **im_kwargs, vmin=25)
+    # axs[1, 1].set_title("Rotation")
+    axs[1, 1].text(
+        0.0, 1.0,
+        LETTERS[3],
+        horizontalalignment="left",
+        verticalalignment="top",
+        transform=axs[1, 1].transAxes + text_offset,
+        color="white",
+    )
+    axs[1, 1].xaxis.set_major_locator(xticker)
+    axs[1, 1].yaxis.set_major_locator(yticker)
+
 
     fig.supxlabel("time / s")
-    fig.supylabel("distance from stapes / m")
+    fig.supylabel("distance from stapes mm")
 
     # Save figure.
     output_file: pathlib.Path = parsed_args.output_file

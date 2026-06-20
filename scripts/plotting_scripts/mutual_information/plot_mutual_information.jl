@@ -60,7 +60,7 @@ function create_figure(M::AbstractMatrix{Float64}, output_file::String, x_label:
     xlabel(x_label)
     ylabel(x_label)
 
-    ticker() = matplotlib.ticker.MaxNLocator(5)
+    ticker() = matplotlib.ticker.MaxNLocator(8, steps=[1, 2, 5, 10])
     gca().xaxis.set_major_locator(ticker())
     gca().yaxis.set_major_locator(ticker())
 

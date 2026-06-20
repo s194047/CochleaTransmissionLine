@@ -9,7 +9,8 @@ import pathlib
 import argparse
 from typing import Final
 
-matplotlib.use("Agg")
+matplotlib.use("pdf")
+plt.style.use("../paper.mplstyle")
 
 PT_PER_INCH: Final = 72.27
 FIGURE_ASPECT_RATIO: Final = 4 / 3
@@ -118,23 +119,31 @@ def main() -> None:
     # Make four subplots.
     fig, axs = plt.subplots(2, 2, figsize=(fig_width_inches, fig_height_inches), sharex=True, sharey=True, layout="constrained")
 
-    axs[0, 0].imshow(window_y_rms_values, aspect="auto", extent=extent)
+    im_kwargs = {
+        "aspect": "auto",
+        "extent": extent,
+        "norm": "asinh",
+    }
+
+    axs[0, 0].imshow(window_y_rms_values, **im_kwargs)
     axs[0, 0].set_title("y RMS")
 
-    axs[0, 1].imshow(window_v_rms_values, aspect="auto", extent=extent)
+    axs[0, 1].imshow(window_v_rms_values, **im_kwargs)
     axs[0, 1].set_title("v RMS")
 
-    axs[1, 0].imshow(np.abs(window_winding_frequency_values / (2 * np.pi)), aspect="auto", extent=extent)
+    axs[1, 0].imshow(np.abs(window_winding_frequency_values / (2 * np.pi)), **im_kwargs)
     axs[1, 0].set_title("Winding")
 
-    axs[1, 1].imshow(np.abs(window_rotation_frequency_values / (2 * np.pi)), aspect="auto", extent=extent)
+    axs[1, 1].imshow(np.abs(window_rotation_frequency_values / (2 * np.pi)), **im_kwargs)
     axs[1, 1].set_title("Rotation")
 
     fig.supxlabel("time / s")
     fig.supylabel("distance from stapes / m")
 
     # Save figure.
-    fig.savefig(parsed_args.output_file)
+    output_file: pathlib.Path = parsed_args.output_file
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_file)
 
 if __name__ == "__main__":
     main()

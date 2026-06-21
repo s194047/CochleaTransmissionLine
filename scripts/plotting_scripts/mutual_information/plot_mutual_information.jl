@@ -60,9 +60,14 @@ function create_figure(M::AbstractMatrix{Float64}, output_file::String, x_label:
     xlabel(x_label)
     ylabel(x_label)
 
-    ticker() = matplotlib.ticker.MaxNLocator(8, steps=[1, 2, 5, 10])
-    gca().xaxis.set_major_locator(ticker())
-    gca().yaxis.set_major_locator(ticker())
+    x_ticker() = matplotlib.ticker.MaxNLocator(8, steps=[1, 2, 5, 10])
+    gca().xaxis.set_major_locator(x_ticker())
+    gca().yaxis.set_major_locator(x_ticker())
+
+    c_ticker() = matplotlib.ticker.MaxNLocator(8, steps=[1, 2, 5, 10])
+    cbar = colorbar()
+    cbar.set_label("mutual information / bits")
+    cbar.ax.yaxis.set_major_locator(c_ticker())
 
     mkpath(dirname(output_file))
     fig.savefig(output_file)

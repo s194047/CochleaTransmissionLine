@@ -638,6 +638,14 @@ JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
 
 Instead of manually writing the job dependencies, it can be automated in a script. The `shell_scripts/run_pipeline.sh` script does exactly that. It runs four `ctl_process_audio_files` jobs. After those are done, it runs `cochleogram_process_ctl_files`. After that job is done, it runs `plot_cochleogram_data`. This means that for a certain parameter such as SPL_TARGET, the whole pipeline of running the CTL, extracting cochleogram metrics and plotting can be scheduled with one command.
 
+## Mutual information
+
+```sh
+julia --project=. -t 10 scripts/plotting_scripts/mutual_information/make_mutual_information.jl \
+    -i data/stimulus_sine/frequency-1000__duration-10.000__onset_ramp_time-0.100__ic_duration-100__roughness-rough__saveat-2e-5__only_save_last_seconds-1.0/frequency-1000__duration-10.000__onset_ramp_time-0.100__ic_duration-100__roughness-rough__saveat-2e-5__only_save_last_seconds-1.0__amplitude-1.jld2 \
+    -o data/mutual_information/mutual_information__stimulus_sine_1000_initial_100s_rough_amplitude-1__only_last_1s.jld2
+```
+
 # FIXME anything below
 
 

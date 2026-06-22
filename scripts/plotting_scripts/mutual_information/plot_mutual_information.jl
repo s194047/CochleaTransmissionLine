@@ -41,12 +41,18 @@ function parse_commandline()::Dict
             :range_tester => ∈(["index", "length"]),
             :required => true,
         ),
+        ["--gamma", "-g"], Dict(
+            :help => "Gamma of the colorscale.",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+            :required => true,
+        ),
     )
 
     parse_args(arg_defs)
 end
 
-function create_figure(M::AbstractMatrix{Float64}, output_file::String, x_label::String, x_extent::Tuple{Float64, Float64})
+function create_figure(M::AbstractMatrix{Float64}, output_file::String, x_label::String, x_extent::Tuple{Float64, Float64}, gamma::Float64)
     fig_width_in = column_width_pt / latex_pt_per_in
     fig_height_in = fig_width_in / figure_aspect_ratio
 
@@ -55,6 +61,7 @@ function create_figure(M::AbstractMatrix{Float64}, output_file::String, x_label:
         M,
         origin="lower",
         extent=[x_extent[1], x_extent[2], x_extent[1], x_extent[2]],
+        norm=matplotlib.colors.PowerNorm(gamma=gamma, vmin=0),
     )
 
     xlabel(x_label)
@@ -79,6 +86,7 @@ function main()
     input_file = parsed_args["input-file"]
     output_file = parsed_args["output-file"]
     x_type = parsed_args["x-type"]
+    gamma = parsed_args["gamma"]
 
     # Load precomputed mutual information matrices
     println(stderr, "Loading mutual information from $(input_file)")
@@ -97,12 +105,12 @@ function main()
 
 
     (output_base, output_extension) = splitext(output_file)
-    output_prefix = output_base * "__x_type-$(x_type)"
+    output_prefix = output_base * "__x_type_$(x_type)__gamma_$(gamma)"
     output_file_y = "$(output_prefix)__y$(output_extension)"
     output_file_v = "$(output_prefix)__v$(output_extension)"
 
-    create_figure(M_y, output_file_y, x_label, x_extent)
-    create_figure(M_v, output_file_v, x_label, x_extent)
+    create_figure(M_y, output_file_y, x_label, x_extent, gamma)
+    create_figure(M_v, output_file_v, x_label, x_extent, gamma)
 end
 
 # Only run if script is executed directly.

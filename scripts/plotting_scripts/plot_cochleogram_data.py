@@ -191,7 +191,7 @@ def main() -> None:
 
 
     fig.supxlabel("time / s")
-    fig.supylabel("distance from stapes mm")
+    fig.supylabel("distance from stapes / mm")
 
     # Save figure.
     output_file: pathlib.Path = parsed_args.output_file

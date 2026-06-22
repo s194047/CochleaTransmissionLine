@@ -3,21 +3,6 @@ using CochleaTransmissionLine
 using TimeZones
 using JLD2
 using ArgParse
-using PythonPlot
-
-matplotlib.use("pdf")
-matplotlib.style.use("../paper.mplstyle")
-
-# widths from the LaTeX document
-const column_width_pt = 221.0
-const text_width_pt = 452.0
-
-# Conversion factor: 72.27 LaTeX points per 72 Makie (PostScript) points
-const latex_pt_per_pt = 72.27 / 72
-const latex_pt_per_in = 72.27
-
-# Aspect ratio of plot
-const figure_aspect_ratio = 4 / 3
 
 function parse_commandline()::Dict
     arg_defs = ArgParseSettings()

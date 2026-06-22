@@ -130,9 +130,16 @@ function main()
     py_xlim = gca().get_xlim()
     jl_xlim = pyconvert(Tuple{Float64,Float64}, py_xlim)
 
+    # Use second point for first line if the dB differene is smaller than 1 dB.
+    if v_cp_db_values[2] - v_cp_db_values[1] > 1
+        first_idx = 1
+    else
+        first_idx = 2
+    end
+
     # Calculate 1 dB/dB lines for the first and last points
-    x_line = [input_amplitude_db_spl_values[1], input_amplitude_db_spl_values[end]]
-    y_line_low = [v_cp_db_values[1], v_cp_db_values[1] + (x_line[2] - x_line[1])]
+    x_line = [input_amplitude_db_spl_values[first_idx], input_amplitude_db_spl_values[end]]
+    y_line_low = [v_cp_db_values[first_idx], v_cp_db_values[first_idx] + (x_line[2] - x_line[1])]
     y_line_high = [v_cp_db_values[end] - (x_line[2] - x_line[1]), v_cp_db_values[end]]
 
     x_line_disp = [jl_xlim[1], jl_xlim[2]]

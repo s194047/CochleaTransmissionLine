@@ -15,7 +15,9 @@ SOLVER_PARAMS_TEMPLATE_FILE=params/solver_params/template.yaml
 : "${ONSET_RAMP_TIME:=0.000}"
 : "${SAVEAT:=2e-5}"
 
-RUN_ID="frequency-${FREQUENCY}__duration-${DURATION}__onset_ramp_time-${ONSET_RAMP_TIME}__ic_duration-${IC_DURATION}__roughness-${ROUGHNESS}__saveat-${SAVEAT}__only_save_last_interval"
+: "${LAST_SECONDS:=1.0}"
+
+RUN_ID="frequency-${FREQUENCY}__duration-${DURATION}__onset_ramp_time-${ONSET_RAMP_TIME}__ic_duration-${IC_DURATION}__roughness-${ROUGHNESS}__saveat-${SAVEAT}__only_save_last_seconds-${LAST_SECONDS}"
 
 >&2 echo "cwd: $(pwd)"
 >&2 echo "OUTPUT_BASE_DIR: $OUTPUT_BASE_DIR"
@@ -25,7 +27,7 @@ stimulus_sine_1000_ctl() {
     (
         local AMPLITUDE=$1
         local OUTPUT_DIR=$OUTPUT_BASE_DIR/${RUN_ID}
-	mkdir -p "$OUTPUT_DIR"
+	    mkdir -p "$OUTPUT_DIR"
         local OUTPUT_FILE="$OUTPUT_DIR/${RUN_ID}__amplitude-${AMPLITUDE}.jld2"
         export INITIAL_CONDITIONS_FILE
         export SAVEAT
@@ -40,7 +42,7 @@ stimulus_sine_1000_ctl() {
             --stimulus-sine-frequency "$FREQUENCY" --stimulus-sine-amplitude "$AMPLITUDE" \
             --stimulus-onset-ramp-time "$ONSET_RAMP_TIME" \
             --output-file "$OUTPUT_FILE" \
-            --only-save-last-interval \
+            --only-save-last-seconds "$LAST_SECONDS" \
             &>> "$OUTPUT_FILE.log"
     )
 }

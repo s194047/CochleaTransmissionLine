@@ -22,6 +22,7 @@ stimulus_spl_reference_opt = "stimulus-spl-reference"
 stimulus_onset_ramp_time_opt = "stimulus-onset-ramp-time"
 
 only_save_last_interval_opt = "only-save-last-interval"
+only_save_last_seconds_opt = "only-save-last-seconds"
 output_file_opt = "output-file"
 
 function parse_commandline()::Dict
@@ -87,6 +88,11 @@ function parse_commandline()::Dict
             :help => "Save only the last interval of the simulation, e.g. for generating initial conditions",
             :action => :store_true,
         ),
+        "--$only_save_last_seconds_opt", Dict(
+            :help => "Save only the last specified amount of seconds of the simulation",
+            :arg_type => Float64,
+            :metavar => "FLOAT",
+        ),
         ["--$output_file_opt", "-o"], Dict(
             :help => "Output JLD2 file containing time series data of the simulation",
             :arg_type => String,
@@ -124,6 +130,9 @@ function parse_commandline()::Dict
         if !isnothing(parsed_args[stimulus_sine_amplitude_opt]) && !isnothing(parsed_args[stimulus_spl_target_opt])
             argparse_error(arg_defs, "options --$stimulus_sine_amplitude_opt and --$stimulus_spl_target_opt are mutually exclusive")
         end
+    end
+    if parsed_args[only_save_last_interval_opt] && !isnothing(parsed_args[only_save_last_seconds_opt])
+        argparse_error(arg_defs, "options --$only_save_last_interval_opt and --$only_save_last_seconds_opt are mutually exclusive")
     end
 
     if isnothing(parsed_args[stimulus_onset_ramp_time_opt])
@@ -259,7 +268,11 @@ function main()
             solver_params,
         )
 
-        if !parsed_args[only_save_last_interval_opt] || interval == intervals[end]
+        if parsed_args[only_save_last_interval_opt] && interval != intervals[end]
+            println(stderr, "Only saving last interval. Skipped appending results for this interval.")
+        elseif !isnothing(parsed_args[only_save_last_seconds_opt]) && interval[2] <= solver_params.tspan[2] - parsed_args[only_save_last_seconds_opt]
+            println(stderr, "Only saving last $(parsed_args[only_save_last_seconds_opt]) seconds. Skipped appending results for this interval.")
+        else
             # Append the results to the overall solution.
             println(stderr, "Appending results to overall solution...")
             if isempty(t) || solution.t[1] > t[end]
@@ -271,8 +284,6 @@ function main()
                 append!(t, solution.t[2:end])
                 append!(u, solution.u[2:end])
             end
-        else
-            println(stderr, "Only saving last interval. Skipped appending results for this interval.")
         end
 
         # Clear the reference to the previous solution to release the memory between iterations.

@@ -13,9 +13,9 @@ for x_type in length; do #index; do
 
     # Sine stimulus matrices
     julia --project=. ./scripts/plotting_scripts/mutual_information/plot_mutual_information.jl \
-        -i ${DATA_DIR}/mutual_information/mutual_information__stimulus_sine_1000_initial_100s_rough_amplitude-1.jld2 \
+        -i ${DATA_DIR}/mutual_information/mutual_information__stimulus_sine_1000_initial_100s_rough_amplitude-1__only_last_1s.jld2 \
         -x ${x_type} \
-        -o ${FIGURE_DIR}/mutual_information/mutual_information__stimulus_sine_1000_initial_100s_rough_amplitude-1_${x_type}.pdf &
+        -o ${FIGURE_DIR}/mutual_information/mutual_information__stimulus_sine_1000_initial_100s_rough_amplitude-1__only_last_1s_${x_type}.pdf &
 done
 
 wait

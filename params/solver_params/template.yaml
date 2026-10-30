@@ -1,0 +1,6 @@
+previous_solution_filename: "$INITIAL_CONDITIONS_FILE"
+
+tspan: [0.0, $DURATION]
+# Enter the sampling period to use when sampling the solution (saveat).
+# Leave out if the solution should not be sampled when solving.
+saveat: $SAVEAT

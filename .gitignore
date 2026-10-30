@@ -7,3 +7,5 @@ figures
 # Output files from HPC runs
 *.out
 *.err
+
+/.CondaPkg/

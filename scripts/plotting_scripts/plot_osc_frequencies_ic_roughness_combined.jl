@@ -94,7 +94,7 @@ function main()
         fig, axs = subplots(1, 2, sharex=true, sharey=true, figsize=(fig_width_in, fig_height_in))
     else # parsed_args["orientation"] == "vertical"
         fig_width_in = column_width_pt / latex_pt_per_in
-        fig_height_in = column_width_pt / latex_pt_per_in / figure_aspect_ratio * 2
+        fig_height_in = column_width_pt / latex_pt_per_in / figure_aspect_ratio * 1.5
         fig, axs = subplots(2, 1, sharex=true, sharey=true, figsize=(fig_width_in, fig_height_in))
     end
 

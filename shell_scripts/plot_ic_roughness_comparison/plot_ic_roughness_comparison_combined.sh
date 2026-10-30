@@ -4,8 +4,8 @@ set -euo pipefail
 : "${DATA_DIR:=data}"
 : "${FIGURE_DIR:=${DATA_DIR}/figures}"
 
-for orientation in horizontal vertical; do
-    for freq_type in winding rotation; do
+for orientation in vertical; do
+    for freq_type in rotation; do
         julia --project=. scripts/plotting_scripts/plot_osc_frequencies_ic_roughness_combined.jl \
         -i ${DATA_DIR}/stimulus_zero \
         -o ${FIGURE_DIR}/ic_roughness_comparison/${freq_type}_combined_${orientation}.pdf \
